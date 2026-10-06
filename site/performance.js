@@ -135,7 +135,7 @@
     const axis = node("div", undefined, "axis"); const labels = node("div", undefined, "axis-labels");
     [low, (low + high) / 2, high].forEach(tick => labels.append(node("span", format(tick, digits))));
     axis.append(labels); holder.append(axis);
-    $("metric-unit").textContent = measures[metric].unit + " · foundation means on a zoomed scale";
+    $("metric-unit").textContent = measures[metric].unit + " · zoomed scale";
     $("oracle-note").textContent = "The oracle knows future traces. Only its combined objective bounds attainable performance; its bill and comfort are components of that schedule.";
   }
   function comparisons(group) {

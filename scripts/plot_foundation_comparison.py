@@ -45,7 +45,6 @@ def render(root=ROOT):
         )
 
     text(0.04, 0.94, "Electricity bill", size=18, weight="bold")
-    text(0.96, 0.945, "25 homes · 152 test days · June–October", color=muted, ha="right")
     for x, comparator in ((0.04, indexed["tabfm"]), (0.52, indexed["tabicl"])):
         card(x, 0.69, 0.44, 0.19)
         reduction = 100 * (1 - stats(rows[0])["mean"] / stats(comparator)["mean"])
