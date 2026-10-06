@@ -82,7 +82,7 @@ def render(root=ROOT):
             rows[0]["policy"]["metrics"]["comfort_pct"]["mean"]
             - comparator["policy"]["metrics"]["comfort_pct"]["mean"]
         )
-        text(x + 0.20, 0.735, f"+{comfort_gain:.2f} pp comfort", size=11, color=green)
+        text(x + 0.20, 0.735, f"+{comfort_gain:.2f} pp comfort*", size=11, color=green)
 
     card(0.04, 0.055, 0.92, 0.57)
     text(0.06, 0.588, "$ / home / day · lower is better", size=10, color=muted)
@@ -135,6 +135,14 @@ def render(root=ROOT):
         color=amber,
         ha="right",
         va="center",
+    )
+    text(
+        0.04,
+        0.016,
+        "* Comfort: time within the target indoor temperature range. pp = percentage points.",
+        size=10,
+        color=muted,
+        fontstyle="italic",
     )
     destination = root / "site/foundation-comparison"
     for suffix in ("svg", "png"):

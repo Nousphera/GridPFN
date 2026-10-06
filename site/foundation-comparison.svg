@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-06T23:13:54.867269</dc:date>
+    <dc:date>2026-10-06T23:17:25.630004</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -86,7 +86,7 @@ z
      <g id="line2d_2">
       <path d="M 241.92 343.44
 L 241.92 203.04
-" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#peb613e2b8e)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_3"/>
      <g id="text_1">
@@ -97,7 +97,7 @@ L 241.92 203.04
      <g id="line2d_4">
       <path d="M 432 343.44
 L 432 203.04
-" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#peb613e2b8e)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_5"/>
      <g id="text_2">
@@ -108,7 +108,7 @@ L 432 203.04
      <g id="line2d_6">
       <path d="M 622.08 343.44
 L 622.08 203.04
-" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#peb613e2b8e)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_7"/>
      <g id="text_3">
@@ -119,7 +119,7 @@ L 622.08 203.04
    <g id="matplotlib.axis_2"/>
    <g id="PathCollection_1">
     <defs>
-     <path id="m8f2c67e967" d="M 0 4.873397
+     <path id="m6d28a2ee20" d="M 0 4.873397
 C 1.29244 4.873397 2.532119 4.359905 3.446012 3.446012
 C 4.359905 2.532119 4.873397 1.29244 4.873397 0
 C 4.873397 -1.29244 4.359905 -2.532119 3.446012 -3.446012
@@ -131,13 +131,13 @@ C -2.532119 4.359905 -1.29244 4.873397 0 4.873397
 z
 " style="stroke: #126452"/>
     </defs>
-    <g clip-path="url(#pfafce628e9)">
-     <use xlink:href="#m8f2c67e967" x="279.750785" y="226.44" style="fill: #126452; stroke: #126452"/>
+    <g clip-path="url(#peb613e2b8e)">
+     <use xlink:href="#m6d28a2ee20" x="279.750785" y="226.44" style="fill: #126452; stroke: #126452"/>
     </g>
    </g>
    <g id="PathCollection_2">
     <defs>
-     <path id="m1f30856743" d="M 0 4.873397
+     <path id="mb7d756353f" d="M 0 4.873397
 C 1.29244 4.873397 2.532119 4.359905 3.446012 3.446012
 C 4.359905 2.532119 4.873397 1.29244 4.873397 0
 C 4.873397 -1.29244 4.359905 -2.532119 3.446012 -3.446012
@@ -149,13 +149,13 @@ C -2.532119 4.359905 -1.29244 4.873397 0 4.873397
 z
 " style="stroke: #748797"/>
     </defs>
-    <g clip-path="url(#pfafce628e9)">
-     <use xlink:href="#m1f30856743" x="542.669902" y="273.24" style="fill: #748797; stroke: #748797"/>
+    <g clip-path="url(#peb613e2b8e)">
+     <use xlink:href="#mb7d756353f" x="542.669902" y="273.24" style="fill: #748797; stroke: #748797"/>
     </g>
    </g>
    <g id="PathCollection_3">
-    <g clip-path="url(#pfafce628e9)">
-     <use xlink:href="#m1f30856743" x="474.38498" y="320.04" style="fill: #748797; stroke: #748797"/>
+    <g clip-path="url(#peb613e2b8e)">
+     <use xlink:href="#mb7d756353f" x="474.38498" y="320.04" style="fill: #748797; stroke: #748797"/>
     </g>
    </g>
   </g>
@@ -175,7 +175,7 @@ z
    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="95.472" transform="rotate(-0 207.36 95.472)">Lower simulated bill</text>
   </g>
   <g id="text_9">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="114.48" transform="rotate(-0 207.36 114.48)">+0.30 pp comfort</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="114.48" transform="rotate(-0 207.36 114.48)">+0.30 pp comfort*</text>
   </g>
   <g id="text_10">
    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="466.56" y="75.6" transform="rotate(-0 466.56 75.6)">TabPFN vs TabICLv2</text>
@@ -187,7 +187,7 @@ z
    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="95.472" transform="rotate(-0 622.08 95.472)">Lower simulated bill</text>
   </g>
   <g id="text_13">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="114.48" transform="rotate(-0 622.08 114.48)">+0.12 pp comfort</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="114.48" transform="rotate(-0 622.08 114.48)">+0.12 pp comfort*</text>
   </g>
   <g id="text_14">
    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="51.84" y="177.984" transform="rotate(-0 51.84 177.984)">$ / home / day · lower is better</text>
@@ -219,9 +219,12 @@ z
   <g id="text_23">
    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #a67b37" x="812.16" y="395.977422" transform="rotate(-0 812.16 395.977422)">1.1132 ± 0.795</text>
   </g>
+  <g id="text_24">
+   <text style="font-style: italic; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="34.56" y="425.088" transform="rotate(-0 34.56 425.088)">* Comfort: time within the target indoor temperature range. pp = percentage points.</text>
+  </g>
  </g>
  <defs>
-  <clipPath id="pfafce628e9">
+  <clipPath id="peb613e2b8e">
    <rect x="241.92" y="203.04" width="380.16" height="140.4"/>
   </clipPath>
  </defs>
