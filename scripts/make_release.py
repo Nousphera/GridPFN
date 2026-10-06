@@ -176,6 +176,7 @@ requirements-tabicl.txt
 requirements.txt
 scripts/check_site.py
 scripts/build_site.py
+scripts/carbon_estimate.py
 scripts/assistant_demo/record.py
 scripts/make_release.py
 scripts/plot_foundation_comparison.py
@@ -187,6 +188,7 @@ site/performance.css
 site/performance.html
 site/performance.js
 site/performance.json
+site/carbon.json
 site/performance.pdf
 site/performance.png
 site/performance.svg

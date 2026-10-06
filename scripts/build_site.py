@@ -6,6 +6,7 @@ from pathlib import Path
 
 from gridpfn.paths import ROOT
 from gridpfn.release_evidence import load_evidence
+from scripts.carbon_estimate import load_carbon
 
 SITE_FILES = (
     "index.html",
@@ -14,6 +15,7 @@ SITE_FILES = (
     "performance.css",
     "performance.js",
     "performance.json",
+    "carbon.json",
     "performance.svg",
     "performance.pdf",
     "foundation-comparison.svg",
@@ -27,6 +29,7 @@ def build(destination):
     if destination == ROOT or destination == ROOT / "site":
         raise ValueError("Choose a separate output directory")
     load_evidence(ROOT / "site/performance.json")
+    load_carbon(ROOT / "site/carbon.json", ROOT / "site/performance.json")
     # Enumerate exactly what may be published; never copy the source checkout.
     sources = [(ROOT / "site" / name, destination / name) for name in SITE_FILES]
     sources += [

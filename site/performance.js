@@ -26,6 +26,7 @@
   const focused = new URLSearchParams(location.search).get("scope") === "foundations";
   const foundationIds = ["tabpfn", "tabfm", "tabicl"];
   let evidence = null;
+  let carbonEvidence = null;
   let metric = focused ? "energy_bill_without_dr" : "objective";
   let frame = 0;
 
@@ -121,12 +122,10 @@
       const stats = row.policy.metrics[metric];
       const line = node("div", undefined, "chart-row"); line.dataset.method = row.id;
       const label = node("div", row.label, "chart-label" + (row.id === "tabpfn" ? " emphasized" : ""));
-      const value = node("div", undefined, "chart-value");
-      value.append(node("span", format(stats.mean, digits)), node("span", ` ± ${format(stats.sd, 3)}`, "sd"));
       if (row.id === "oracle") {
         line.classList.add("oracle-separate");
-        label.append(node("span", "Perfect-future reference", "reference"));
-        line.append(label, node("span", "", "oracle-space"), value);
+        line.title = `${row.label}: ${format(stats.mean, digits)}`;
+        line.append(label, node("span", "Reference", "oracle-key"));
       } else {
         const svg = svgNode("svg", {viewBox: "0 0 600 36", class: "track", role: "img", "aria-label": `${row.label}: mean ${stats.mean}, household SD ${stats.sd}`});
         const x = amount => 12 + 576 * (amount - low) / (high - low);
@@ -134,14 +133,14 @@
         const color = row.id === "tabpfn" ? "#126452" : "#748797";
         const marker = svgNode("circle", {cx:x(stats.mean),cy:18,r:7,fill:color,class:"foundation-mean"});
         marker.append(svgNode("title", {})); marker.firstChild.textContent = `${row.label}: ${format(stats.mean, digits)} ± ${format(stats.sd, 3)}`;
-        svg.append(marker); line.append(label, svg, value);
+        svg.append(marker); line.append(label, svg);
       }
       holder.append(line);
     }
     const axis = node("div", undefined, "axis"); const labels = node("div", undefined, "axis-labels");
     ticks.forEach(tick => labels.append(node("span", (metric === "energy_bill_without_dr" ? "$" : "") + format(tick, tickDigits))));
     axis.append(labels); holder.append(axis);
-    $("metric-unit").textContent = measures[metric].unit;
+    $("metric-unit").textContent = metric === "energy_bill_without_dr" ? "Average daily bill ($) · lower is better" : measures[metric].unit;
     $("oracle-note").textContent = "The oracle knows future traces. Only its combined objective bounds attainable performance; its bill and comfort are components of that schedule.";
   }
   function comparisons(group) {
@@ -149,7 +148,7 @@
     const holder = $("comparisons");
     holder.replaceChildren();
     const names = {tabfm: "TabFM", tabicl: "TabICLv2", trees: "Extra Trees"};
-    const labels = {objective: "objective", energy_bill_without_dr: "bill", comfort_pct: "comfort"};
+    const labels = {objective: "objective", energy_bill_without_dr: "bill", comfort_pct: "comfort*"};
     for (const id of (focused ? ["tabfm", "tabicl"] : ["tabfm", "tabicl", "trees"])) {
       const baseline = group.rows.find(row => row.id === id).policy.metrics[metric].mean;
       const delta = tabpfn - baseline;
@@ -172,6 +171,28 @@
       card.append(node("p", `${delta < 0 ? "Lower" : delta > 0 ? "Higher" : "Same"} ${labels[metric]}`, "comparison-direction"));
       holder.append(card);
     }
+  }
+  function impact(group) {
+    const holder = $("savings-summary"); holder.replaceChildren();
+    const bills = Object.fromEntries(group.rows.map(row => [row.id, row.policy.metrics.energy_bill_without_dr.mean]));
+    const savings = ((bills.tabfm + bills.tabicl) / 2 - bills.tabpfn) * group.home_ids.length * group.dates.length;
+    holder.dataset.savings = savings;
+    holder.dataset.outcome = savings >= 0 ? "better" : "worse";
+    holder.append(node("h3", savings >= 0 ? "Total simulated savings" : "Total simulated extra cost"),
+      node("p", `$${format(Math.abs(savings), 2)}`, "impact-amount"),
+      node("p", "vs average of TabFM + TabICLv2", "impact-baseline"));
+    if (!carbonEvidence) {
+      holder.append(node("p", "CO₂ estimate unavailable", "impact-baseline"));
+      return;
+    }
+    const periods = $("period").value === "pooled" ? carbonEvidence.periods : carbonEvidence.periods.filter(p => p.id === group.id);
+    const imported = Object.fromEntries(foundationIds.map(id => [id, periods.reduce((sum, period) => sum + period.rows.find(row => row.id === id).import_kwh, 0)]));
+    const carbon = ((imported.tabfm + imported.tabicl) / 2 - imported.tabpfn) * carbonEvidence.factor.kg_co2_per_kwh;
+    const climate = node("div", undefined, "climate-impact");
+    climate.dataset.outcome = carbon >= 0 ? "better" : "worse"; climate.dataset.co2 = carbon;
+    climate.append(node("p", `≈ ${format(Math.abs(carbon), 1)} kg CO₂**`, "climate-amount"),
+      node("p", `${carbon >= 0 ? "Lower" : "Higher"} estimated electricity footprint`, "impact-baseline"));
+    holder.append(climate, node("p", "🍃 Plan around solar", "solar-note"));
   }
   function tables(group) {
     const body = $("values"); body.replaceChildren();
@@ -202,13 +223,14 @@
     if (!evidence) return;
     const group = selectedGroup();
     const period = $("period").value === "pooled" ? "June–October" : monthLabel(group.id);
-    $("period-description").textContent = `${group.home_ids.length} homes · ${period} · ${group.dates.length} days`;
+    $("period-description").textContent = focused ? `${period} · recorded simulation` : `${group.home_ids.length} homes · ${period} · ${group.dates.length} days`;
     if (!focused) $("table-caption").textContent = `${$("period").value === "pooled" ? "All months" : monthLabel(group.id)} · all methods · household mean ± sample SD`;
     comparisons(group);
     const showSpread = !focused;
-    document.querySelector(".legend").textContent = showSpread ? "Households · mean ± household SD" : "Points: means · labels: mean ± household SD";
+    document.querySelector(".legend").textContent = showSpread ? "Households · mean ± household SD" : "Points: average outcomes";
     if (showSpread) chart(group); else meanChart(group);
     if (focused) {
+      impact(group);
       $("oracle-note").textContent = "Oracle knows the future. Only its combined objective is a performance bound—not its bill or comfort separately.";
     } else tables(group);
   }
@@ -219,6 +241,15 @@
     const note = $("oracle-note");
     note.className = "oracle-note";
     document.querySelector(".result-card").append(note);
+    const layout = node("div", undefined, "focus-plot-layout");
+    $("chart").before(layout);
+    const impactCard = node("aside", undefined, "impact-card"); impactCard.id = "savings-summary";
+    layout.append($("chart"), impactCard);
+    const comfortNote = node("p", "* Comfort: time in the target temperature range. pp = percentage points.", "carbon-footnote");
+    const carbonNote = node("p", "** CO₂ estimate: grid imports × 0.37 kg/kWh (2019 Netherlands scenario). Not measured emissions. ", "carbon-footnote");
+    const source = node("a", "CBS"); source.href = "https://www.cbs.nl/nl-nl/achtergrond/2024/51/rendementen-en-co2-emissie-van-elektriciteitsproductie-in-nederland-update-2023";
+    carbonNote.append(source); layout.after(comfortNote, carbonNote);
+    document.querySelector('[data-metric="comfort_pct"]').textContent = "Comfort*";
     document.querySelectorAll(".supporting").forEach(panel => panel.remove());
     document.querySelectorAll("[data-metric]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.metric === metric)));
   }
@@ -232,10 +263,27 @@
   fetch("performance.json", {cache: "no-store"})
     .then(response => { if (!response.ok) throw new Error("Results not published"); return response.json(); })
     .then(validate)
-    .then(data => {
+    .then(async data => {
       evidence = data;
+      if (focused) {
+        try {
+          const response = await fetch("carbon.json", {cache: "no-store"});
+          if (!response.ok) throw new Error("No carbon evidence");
+          const candidate = await response.json();
+          if (candidate.schema_version !== 1 || candidate.factor?.year !== 2019 || candidate.factor?.kg_co2_per_kwh !== 0.37 || candidate.factor?.region !== "Netherlands (assumed scenario)" || candidate.periods?.length !== data.folds.length) throw new Error("Unknown carbon scenario");
+          for (const [index, period] of candidate.periods.entries()) {
+            const fold = data.folds[index];
+            if (period.id !== fold.id || JSON.stringify(period.dates) !== JSON.stringify(fold.dates) || period.rows?.length !== 3 || new Set(period.rows.map(row => row.id)).size !== 3) throw new Error("Carbon periods differ");
+            for (const id of foundationIds) {
+              const row = period.rows.find(item => item.id === id);
+              if (!row || !finite(row.import_kwh) || row.import_kwh < 0 || row.evaluation_sha256 !== fold.rows.find(item => item.id === id).evaluation_sha256) throw new Error("Carbon evaluation differs");
+            }
+          }
+          carbonEvidence = candidate;
+        } catch { carbonEvidence = null; }
+      }
       data.folds.forEach(fold => { const option = node("option", monthLabel(fold.id)); option.value = fold.id; $("period").append(option); });
-      const requestedPeriod = new URLSearchParams(location.search).get("period");
+      const requestedPeriod = new URLSearchParams(location.search).get("period") ?? (focused ? "2019-06" : "pooled");
       if (data.folds.some(fold => fold.id === requestedPeriod)) $("period").value = requestedPeriod;
       $("period").disabled = false;
       document.querySelectorAll("[data-metric]").forEach(button => { button.disabled = false; });

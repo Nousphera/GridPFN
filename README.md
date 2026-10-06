@@ -53,7 +53,7 @@ Each home gets a model directory under `results/personalized/models/`.
 
 <!-- PERFORMANCE:START -->
 
-![Selected month, June 2019: lower bills and higher comfort against both foundation-model baselines](site/foundation-comparison.svg)
+![Selected month, June 2019: lower bills, higher comfort, $9.03 total simulated savings and estimated CO2 footprint reduction](site/foundation-comparison.svg)
 
 > ***Oracle knows the future. Only its combined objective is a performance bound—not its bill or comfort separately.***
 <!-- PERFORMANCE:END -->

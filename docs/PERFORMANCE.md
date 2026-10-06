@@ -117,3 +117,32 @@ This is `(mean baseline daily bill − mean TabPFN daily bill) × 25 × 30`;
 absolute saving, not a claim of substantial deployed savings.
 
 Regenerate the evidence-backed figure with `python -m scripts.plot_foundation_comparison`.
+
+## Estimated electricity footprint: Netherlands scenario
+
+The selected June simulation imports **126.174 kWh less grid electricity** than
+the arithmetic mean of TabFM and TabICLv2 across the evaluated cohort. Applying
+**0.37 kg CO₂/kWh** gives **46.684 kg CO₂**, displayed as **≈46.7 kg CO₂**.
+The factor is the 2019 integral-method value for electricity delivered to users
+in [CBS Table 1](https://www.cbs.nl/-/media/_excel/2024/51/co2-emissie_energieverbruik_rendementen_elektriciteit_2023.xls).
+[CBS explains the average and marginal methods here](https://www.cbs.nl/nl-nl/achtergrond/2024/51/rendementen-en-co2-emissie-van-elektriciteitsproductie-in-nederland-update-2023).
+No additional transmission-loss multiplier is applied to the delivered-electricity factor.
+
+This is an **assumed Netherlands annual-average electricity-footprint scenario**,
+not measured or marginal avoided emissions. The original New York household
+traces and simulator dollar tariffs are unchanged; this is not a Dutch deployment.
+The calculation credits no exports and excludes embodied and model-compute
+emissions. Money and carbon differences are calculated independently: lower
+bills do not establish lower emissions.
+
+`site/carbon.json` contains only monthly aggregate imports and provenance.
+Its exporter checks the frozen evaluation hashes against `site/performance.json`,
+reconciles daily grid imports with the recorded energy balance and reported
+totals, and rejects nonzero peer-to-peer imports. The explorer sums energy over
+the selected period and retains negative differences as higher footprint.
+
+```bash
+python -m scripts.carbon_estimate PATH_TO_SEASONAL_STUDY
+python -m scripts.plot_foundation_comparison
+python -m scripts.build_site
+```

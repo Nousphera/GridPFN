@@ -284,3 +284,113 @@ def test_highlight_refuses_to_claim_a_joint_win_when_none_exists(comfort, baseli
     evidence = {"folds": [highlight_fold("no-joint-win", 80, (100, baseline), comfort)]}
     with pytest.raises(ValueError, match="No recorded month"):
         select_highlight(evidence)
+
+
+@pytest.fixture
+def carbon(evidence):
+    import hashlib
+
+    from scripts.carbon_estimate import FACTOR
+
+    payload = json.dumps(evidence).encode()
+    data = {
+        "schema_version": 1,
+        "factor": copy.deepcopy(FACTOR),
+        "performance_sha256": hashlib.sha256(payload).hexdigest(),
+        "periods": [
+            {
+                "id": fold["id"],
+                "dates": fold["dates"],
+                "rows": [
+                    {"id": method, "import_kwh": amount * (i + 1), "evaluation_sha256": "a" * 64}
+                    for method, amount in [("tabpfn", 100), ("tabfm", 120), ("tabicl", 110)]
+                ],
+            }
+            for i, fold in enumerate(evidence["folds"])
+        ],
+    }
+    return data, payload
+
+
+def test_carbon_signed_energy_arithmetic_and_pooled_totals(carbon):
+    from scripts.carbon_estimate import estimate_for, footprint_difference
+
+    data, _ = carbon
+    assert estimate_for(data, "2019-06")["estimated_co2_reduction_kg"] == pytest.approx(15 * 0.37)
+    assert estimate_for(data, "pooled")["import_reduction_kwh"] == 225
+    rows = data["periods"][0]["rows"]
+    rows[0]["import_kwh"] = 130
+    assert footprint_difference(rows)["estimated_co2_reduction_kg"] == pytest.approx(-15 * 0.37)
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    [None, "factor", "source", "period", "dates", "method", "evaluation", "negative", "nan"],
+)
+def test_carbon_rejects_mismatched_provenance_or_energy(carbon, evidence, corruption):
+    from scripts.carbon_estimate import validate_carbon
+
+    data, payload = carbon
+    period = data["periods"][0]
+    if corruption == "factor":
+        data["factor"]["kg_co2_per_kwh"] = 0.5
+    elif corruption == "source":
+        data["performance_sha256"] = "b" * 64
+    elif corruption == "period":
+        data["periods"].pop()
+    elif corruption == "dates":
+        period["dates"] = []
+    elif corruption == "method":
+        period["rows"].pop()
+    elif corruption == "evaluation":
+        period["rows"][0]["evaluation_sha256"] = "b" * 64
+    elif corruption == "negative":
+        period["rows"][0]["import_kwh"] = -1
+    elif corruption == "nan":
+        period["rows"][0]["import_kwh"] = float("nan")
+    if corruption:
+        with pytest.raises(ValueError):
+            validate_carbon(data, evidence, payload)
+    else:
+        assert validate_carbon(data, evidence, payload) is data
+
+
+@pytest.mark.parametrize("error", [None, "changed_file", "balance", "summary", "p2p", "coverage"])
+def test_carbon_export_reconciles_frozen_energy(tmp_path, monkeypatch, error):
+    import hashlib
+
+    from scripts import carbon_estimate as carbon_module
+
+    fold = {"id": "2019-06", "dates": ["2019-06-01"], "rows": []}
+    for method in carbon_module.METHODS:
+        day = {"import": 10, "export": 2, "net_demand": 8, "p2p_kwh": 0}
+        record = {
+            "dates": fold["dates"],
+            "homes": [{"home_id": 1}],
+            "import": 10,
+            "day_records": [[day]],
+        }
+        if error == "balance":
+            day["net_demand"] = 9
+        elif error == "summary":
+            record["import"] = 11
+        elif error == "p2p":
+            day["p2p_kwh"] = 1
+        elif error == "coverage":
+            record["day_records"] = [[]]
+        raw = json.dumps(record).encode()
+        digest = hashlib.sha256(raw).hexdigest()
+        fold["rows"].append({"id": method, "evaluation_sha256": digest})
+        path = tmp_path / "folds/2019-06/refit/policies" / method / "evaluation/test_latest.json"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(raw + (b" " if error == "changed_file" else b""))
+    minimal = {"folds": [fold], "home_ids": [1]}
+    performance = tmp_path / "performance.json"
+    performance.write_text(json.dumps(minimal))
+    monkeypatch.setattr(carbon_module, "load_evidence", lambda _: minimal)
+    if error:
+        with pytest.raises(ValueError):
+            carbon_module.build(tmp_path, performance)
+    else:
+        result = carbon_module.build(tmp_path, performance)
+        assert [row["import_kwh"] for row in result["periods"][0]["rows"]] == [10, 10, 10]

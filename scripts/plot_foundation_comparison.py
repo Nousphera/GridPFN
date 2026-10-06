@@ -8,10 +8,12 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch
+from matplotlib.patches import FancyBboxPatch, PathPatch
+from matplotlib.path import Path as ShapePath
 
 from gridpfn.paths import ROOT
 from gridpfn.release_evidence import load_evidence
+from scripts.carbon_estimate import estimate_for, load_carbon
 
 
 def select_highlight(data):
@@ -37,9 +39,25 @@ def select_highlight(data):
     return max(candidates, key=lambda item: item[:3])[3]
 
 
+def total_bill_saving(group):
+    """Total simulated dollars versus the equally weighted foundation baselines."""
+    bills = {
+        row["id"]: row["policy"]["metrics"]["energy_bill_without_dr"]["mean"]
+        for row in group["rows"]
+    }
+    return (
+        ((bills["tabfm"] + bills["tabicl"]) / 2 - bills["tabpfn"])
+        * len(group["home_ids"])
+        * len(group["dates"])
+    )
+
+
 def render(root=ROOT):
     root = Path(root)
     data = select_highlight(load_evidence(root / "site/performance.json"))
+    carbon = estimate_for(
+        load_carbon(root / "site/carbon.json", root / "site/performance.json"), data["id"]
+    )
     indexed = {row["id"]: row for row in data["rows"]}
     rows = [indexed[key] for key in ("tabpfn", "tabfm", "tabicl")]
     bill = "energy_bill_without_dr"
@@ -84,14 +102,45 @@ def render(root=ROOT):
         )
         text(x + 0.20, 0.735, f"+{comfort_gain:.2f} pp comfort*", size=11, color=green)
 
-    card(0.04, 0.055, 0.92, 0.57)
-    text(0.06, 0.588, "$ / home / day · lower is better", size=10, color=muted)
-    text(0.94, 0.588, "Mean ± SD across homes", size=10, color=muted, ha="right")
+    card(0.04, 0.095, 0.56, 0.53)
+    card(0.64, 0.095, 0.32, 0.53)
+    text(0.06, 0.588, "Average daily bill · lower is better", size=10, color=muted)
+    text(0.68, 0.54, "Total simulated savings", size=14, color=green)
+    text(0.68, 0.425, f"${total_bill_saving(data):.2f}", size=40, color=green, weight="bold")
+    text(0.68, 0.35, "vs average of TabFM + TabICLv2", size=10, color=muted)
+    text(
+        0.68,
+        0.26,
+        f"≈ {carbon['estimated_co2_reduction_kg']:.1f} kg CO₂**",
+        size=20,
+        color=green,
+        weight="bold",
+    )
+    text(0.68, 0.21, "Lower estimated electricity footprint", size=10, color=green)
+    leaf = ShapePath(
+        [
+            (0.68, 0.10),
+            (0.675, 0.16),
+            (0.72, 0.14),
+            (0.727, 0.175),
+            (0.742, 0.105),
+            (0.71, 0.08),
+            (0.68, 0.10),
+        ],
+        [ShapePath.MOVETO] + [ShapePath.CURVE4] * 6,
+    )
+    fig.add_artist(PathPatch(leaf, transform=fig.transFigure, facecolor=green, edgecolor="none"))
+    fig.add_artist(
+        plt.Line2D(
+            [0.685, 0.718], [0.102, 0.147], transform=fig.transFigure, color="white", linewidth=1
+        )
+    )
+    text(0.745, 0.125, "Plan around solar", size=11, color=green, va="center")
     means = [stats(row)["mean"] for row in rows]
     low, high = floor(min(means) * 100) / 100, ceil(max(means) * 100) / 100
     if high <= low:
         high = low + 0.01
-    axis = fig.add_axes((0.28, 0.205, 0.44, 0.325), zorder=2)
+    axis = fig.add_axes((0.255, 0.205, 0.32, 0.325), zorder=2)
     axis.set_xlim(low, high)
     axis.set_ylim(-0.5, 2.5)
     axis.invert_yaxis()
@@ -107,40 +156,31 @@ def render(root=ROOT):
         axis.scatter(stats(row)["mean"], index, color=color, s=95, zorder=3)
         y = 0.205 + 0.325 * (2.5 - index) / 3
         text(0.06, y, row["label"], size=12, va="center", weight="bold" if index == 0 else "normal")
-        text(
-            0.94,
-            y,
-            f"{stats(row)['mean']:.4f} ± {stats(row)['sd']:.3f}",
-            size=11,
-            ha="right",
-            va="center",
-        )
     fig.add_artist(
         plt.Line2D(
-            [0.06, 0.94],
-            [0.125, 0.125],
+            [0.06, 0.58],
+            [0.145, 0.145],
             transform=fig.transFigure,
             color=amber,
             linestyle=(0, (3, 3)),
             linewidth=0.8,
         )
     )
-    text(0.06, 0.09, "Perfect-future oracle", size=12, color=amber, va="center")
-    oracle = stats(data["oracle"])
+    text(0.06, 0.11, "Perfect-future oracle", size=10, color=amber, va="center")
+    text(0.58, 0.11, "Reference", size=10, color=amber, ha="right", va="center")
     text(
-        0.94,
-        0.09,
-        f"{oracle['mean']:.4f} ± {oracle['sd']:.3f}",
-        size=11,
-        color=amber,
-        ha="right",
-        va="center",
+        0.04,
+        0.050,
+        "* Comfort: time in the target temperature range. pp = percentage points.",
+        size=9,
+        color=muted,
+        fontstyle="italic",
     )
     text(
         0.04,
-        0.016,
-        "* Comfort: time within the target indoor temperature range. pp = percentage points.",
-        size=10,
+        0.019,
+        "** Estimated from grid imports × assumed 2019 Netherlands grid factor (CBS); not measured emissions.",
+        size=9,
         color=muted,
         fontstyle="italic",
     )
