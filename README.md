@@ -37,6 +37,8 @@ Each home learns from its own energy history. ***TabPFN forecasts the next six h
 [Set up your data and model access](docs/REPRODUCE.md), then train:
 
 ```bash
+git clone https://github.com/Nousphera/GridPFN.git
+cd GridPFN
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-assistant.txt

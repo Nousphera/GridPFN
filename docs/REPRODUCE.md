@@ -5,6 +5,8 @@ Obtain authorized [input data](../dataset/README.md) and
 [TabPFN model access](https://docs.priorlabs.ai/models/accessing-model-weights).
 
 ```bash
+git clone https://github.com/Nousphera/GridPFN.git
+cd GridPFN
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-assistant.txt
@@ -14,7 +16,7 @@ python -m pip install -r requirements-assistant.txt
 
 ```bash
 python train.py --config configs/gridpfn.toml
-python hems_assistant.py --model results/personalized/models/home_27 --port 8770
+python hems_assistant.py --household results/personalized/models/home_27 --port 8770
 ```
 
 Training runs TabPFN + FedAvg across all 25 homes, chooses its training budget on
