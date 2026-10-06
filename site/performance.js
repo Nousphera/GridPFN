@@ -155,6 +155,8 @@
       const sign = amount < 0 ? "−" : amount > 0 ? "+" : "";
       const number = magnitude > 0 && magnitude < 0.5 * 10 ** -digits ? `<${10 ** -digits}` : format(magnitude, digits);
       const card = node("article", undefined, "comparison-card");
+      const better = metric === "comfort_pct" ? delta > 0 : delta < 0;
+      card.dataset.outcome = delta === 0 ? "equal" : better ? "better" : "worse";
       card.dataset.comparator = id;
       card.dataset.delta = String(delta);
       card.dataset.scale = metric === "comfort_pct" ? "percentage-points" : relative ? "percent" : "absolute";

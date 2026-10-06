@@ -52,11 +52,8 @@ Each home gets a model directory under `results/personalized/models/`.
 <summary><strong>Performance comparison</strong></summary>
 
 <!-- PERFORMANCE:START -->
-**Lower simulated bills:** TabPFN reduced the average bill by **0.42% vs TabFM** and **0.07% vs TabICLv2**, with the lowest combined objective of the three foundation-model variants.
 
-**25 homes · 152 test days · 5 forward months**
-
-![Three foundation models and the perfect-future oracle: average bills and objective gaps](site/foundation-comparison.svg)
+![Simulated bills: TabPFN, TabFM, TabICLv2 and the perfect-future oracle](site/foundation-comparison.svg)
 
 > ***Oracle knows the future. Only its combined objective is a performance bound—not its bill or comfort separately.***
 <!-- PERFORMANCE:END -->

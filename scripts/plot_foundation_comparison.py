@@ -1,4 +1,4 @@
-"""Render a focused, fully sourced foundation-model comparison for the README."""
+"""Render the compact README bill comparison from verified experiment evidence."""
 
 from pathlib import Path
 
@@ -6,6 +6,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
 
 from gridpfn.paths import ROOT
 from gridpfn.release_evidence import load_evidence
@@ -15,109 +16,93 @@ def render(root=ROOT):
     root = Path(root)
     data = load_evidence(root / "site/performance.json")
     indexed = {row["id"]: row for row in data["rows"]}
-    rows = [indexed[k] for k in ("tabpfn", "tabicl", "tabfm")]
-    oracle = data["oracle"]
+    rows = [indexed[key] for key in ("tabpfn", "tabfm", "tabicl")]
     bill = "energy_bill_without_dr"
 
-    def metric(row, key):
-        return row["policy"]["metrics"][key]
+    def stats(row):
+        return row["policy"]["metrics"][bill]
 
-    colors = ["#126452", "#678396", "#8a91a1"]
-    plt.rcParams.update({"font.family": "DejaVu Sans", "svg.fonttype": "none", "font.size": 10})
-    fig = plt.figure(figsize=(12, 6.4), facecolor="#ffffff")
-    fig.text(
-        0.06,
-        0.935,
-        "Lower bills among the foundation models",
-        fontsize=22,
-        weight="bold",
-        color="#193c35",
-    )
-    fig.text(
-        0.06, 0.885, "25 homes · 152 test days · June–October 2019", fontsize=11, color="#62716d"
-    )
-    for x, key in ((0.06, "tabfm"), (0.52, "tabicl")):
-        reduction = 100 * (1 - metric(rows[0], bill)["mean"] / metric(indexed[key], bill)["mean"])
-        fig.text(x, 0.775, f"{reduction:.2f}%", fontsize=30, weight="bold", color="#126452")
-        fig.text(x + 0.155, 0.79, "lower simulated bill", fontsize=12, color="#193c35")
-        fig.text(x + 0.155, 0.754, f"vs {indexed[key]['label']}", fontsize=10, color="#62716d")
-    left = fig.add_axes((0.16, 0.28, 0.31, 0.34))
-    means = [metric(row, bill)["mean"] for row in rows]
-    span = max(means) - min(means) or 0.001
-    for i, (row, color) in enumerate(zip(rows, colors, strict=True)):
-        stats = metric(row, bill)
-        left.scatter(stats["mean"], i, color=color, s=90, zorder=3)
-        left.annotate(
-            f"${stats['mean']:.4f}",
-            (stats["mean"], i),
-            xytext=(0, 12),
-            textcoords="offset points",
-            ha="center",
-            fontsize=10,
-            color=color,
-            weight="bold",
+    ink, green, muted, amber = "#193c35", "#126452", "#718478", "#a67b37"
+    plt.rcParams.update({"font.family": "DejaVu Sans", "svg.fonttype": "none"})
+    fig = plt.figure(figsize=(12, 6), facecolor="#f7f6f0")
+
+    def text(x, y, value, size=11, color=ink, **kwargs):
+        return fig.text(x, y, value, fontsize=size, color=color, parse_math=False, **kwargs)
+
+    def card(x, y, width, height):
+        fig.add_artist(
+            FancyBboxPatch(
+                (x, y),
+                width,
+                height,
+                boxstyle="round,pad=0.012,rounding_size=0.018",
+                transform=fig.transFigure,
+                facecolor="white",
+                edgecolor="#dce2d7",
+                linewidth=1,
+                zorder=0,
+            )
         )
-    left.set_xlim(min(means) - 0.42 * span, max(means) + 0.42 * span)
-    left.set_ylim(2.55, -0.65)
-    left.set_yticks(range(3), [row["label"] for row in rows])
-    left.set_xticks([1.556, 1.560, 1.564, 1.568])
-    left.set_xlabel("Mean bill ($ / home / day) · zoomed scale", labelpad=12, fontsize=9)
-    left.set_title("Electricity bill ↓", loc="left", pad=23, weight="bold", fontsize=12)
-    right = fig.add_axes((0.67, 0.28, 0.26, 0.34))
-    bound = oracle["bound"]["upper"]
-    all_rows = rows + [oracle]
-    for i, (row, color) in enumerate(zip(all_rows, colors + ["#b28036"], strict=True)):
-        gap = metric(row, "objective")["mean"] - bound
-        right.hlines(i, 0, gap, color=color, linewidth=3)
-        right.scatter(gap, i, color=color, s=65, zorder=3)
-        right.annotate(
-            f"{gap:.4f}",
-            (gap, i),
-            xytext=(8, 0),
-            textcoords="offset points",
+
+    text(0.04, 0.94, "Electricity bill", size=18, weight="bold")
+    text(0.96, 0.945, "25 homes · 152 test days · June–October", color=muted, ha="right")
+    for x, comparator in ((0.04, indexed["tabfm"]), (0.52, indexed["tabicl"])):
+        card(x, 0.69, 0.44, 0.19)
+        reduction = 100 * (1 - stats(rows[0])["mean"] / stats(comparator)["mean"])
+        text(x + 0.02, 0.825, f"TabPFN vs {comparator['label']}", color=muted)
+        text(x + 0.02, 0.751, f"−{reduction:.2f}%", size=28, color=green, weight="bold")
+        text(x + 0.20, 0.762, "Lower simulated bill", size=12, color=green)
+
+    card(0.04, 0.055, 0.92, 0.57)
+    text(0.06, 0.588, "$ / home / day · lower is better · zoomed scale", size=10, color=muted)
+    text(0.94, 0.588, "Mean ± SD across homes", size=10, color=muted, ha="right")
+    means = [stats(row)["mean"] for row in rows]
+    span = max(means) - min(means)
+    low, high = min(means) - 0.22 * span, max(means) + 0.22 * span
+    axis = fig.add_axes((0.28, 0.205, 0.44, 0.325), zorder=2)
+    axis.set_xlim(low, high)
+    axis.set_ylim(-0.5, 2.5)
+    axis.invert_yaxis()
+    ticks = [low, (low + high) / 2, high]
+    axis.set_xticks(ticks, [f"{v:.4f}" for v in ticks])
+    axis.set_yticks([])
+    axis.tick_params(length=0, labelsize=9, colors=muted, pad=10)
+    axis.grid(axis="x", color="#edf0e9")
+    for spine in axis.spines.values():
+        spine.set_visible(False)
+    for index, row in enumerate(rows):
+        color = green if row["id"] == "tabpfn" else "#748797"
+        axis.scatter(stats(row)["mean"], index, color=color, s=95, zorder=3)
+        y = 0.205 + 0.325 * (2.5 - index) / 3
+        text(0.06, y, row["label"], size=12, va="center", weight="bold" if index == 0 else "normal")
+        text(
+            0.94,
+            y,
+            f"{stats(row)['mean']:.4f} ± {stats(row)['sd']:.3f}",
+            size=11,
+            ha="right",
             va="center",
-            fontsize=10,
-            color=color,
         )
-    right.set_xlim(-0.08, 3.4)
-    right.set_ylim(3.55, -0.65)
-    right.set_yticks(
-        range(4), [row["label"] if row["id"] != "oracle" else "Oracle" for row in all_rows]
+    fig.add_artist(
+        plt.Line2D(
+            [0.06, 0.94],
+            [0.125, 0.125],
+            transform=fig.transFigure,
+            color=amber,
+            linestyle=(0, (3, 3)),
+            linewidth=0.8,
+        )
     )
-    right.set_xticks([0, 1, 2, 3])
-    right.set_xlabel("Combined objective above oracle · lower is better", labelpad=12, fontsize=9)
-    right.set_title(
-        "Distance to perfect foresight ↓", loc="left", pad=23, weight="bold", fontsize=12
-    )
-    for axis in (left, right):
-        axis.grid(axis="x", color="#e7edeb", zorder=0)
-        axis.set_axisbelow(True)
-        axis.tick_params(axis="both", length=0, labelsize=9)
-        for spine in axis.spines.values():
-            spine.set_visible(False)
-    deviations = " · ".join(f"{row['label']}: ${metric(row, bill)['sd']:.3f}" for row in rows)
-    fig.text(
-        0.06, 0.16,
-        "Household bill spread (SD): higher means more variation, not better performance.",
-        fontsize=12, fontstyle="italic", color="#62716d",
-    )
-    fig.text(0.06, 0.12, deviations + " / day", fontsize=11, color="#62716d")
-    fig.text(
-        0.06,
-        0.075,
-        f"Oracle bill: ${metric(oracle, bill)['mean']:.4f} mean · ${metric(oracle, bill)['sd']:.3f} household SD / day",
-        fontsize=12,
-        fontstyle="italic",
-        parse_math=False,
-        color="#8c682f",
-    )
-    fig.text(
-        0.06,
-        0.03,
-        "Oracle knows the future. Only its combined objective is a performance bound.",
-        fontsize=12,
-        fontstyle="italic",
-        color="#62716d",
+    text(0.06, 0.09, "Perfect-future oracle", size=12, color=amber, va="center")
+    oracle = stats(data["oracle"])
+    text(
+        0.94,
+        0.09,
+        f"{oracle['mean']:.4f} ± {oracle['sd']:.3f}",
+        size=11,
+        color=amber,
+        ha="right",
+        va="center",
     )
     destination = root / "site/foundation-comparison"
     for suffix in ("svg", "png"):
