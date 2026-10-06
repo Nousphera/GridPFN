@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "frozen_date": "2026-10-06",
+  "question": "Does frozen TabPFN-3.5 improve a matched federated home-energy controller?",
+  "seeds": [31, 32, 33],
+  "fixed_seed_rule": "seed * 100 + 1",
+  "home_ids": [27, 950, 1222, 3000, 3488, 3517, 5587, 5679, 5997, 9053],
+  "episodes": 8000,
+  "preset": "ppo",
+  "shared": ["--no-strict_convergence", "--patience", "0", "--validation_only", "--cpu_threads", "1"],
+  "arms": {
+    "tabpfn": {"label": "Frozen TabPFN-3.5 + PPO", "options": ["--feature_mode", "hybrid", "--head_width", "64", "--value_width", "64"]},
+    "mlp": {"label": "Raw-state MLP + PPO", "options": ["--feature_mode", "raw", "--embedding_weight", "1", "--head_width", "64", "--value_width", "64"]},
+    "mlp_capacity": {"label": "Capacity-matched MLP + PPO", "options": ["--feature_mode", "raw", "--embedding_weight", "1", "--head_width", "2913", "--value_width", "3513"]}
+  },
+  "primary_checkpoint": "best",
+  "secondary_checkpoint": "best_feasible",
+  "selection": "Maximum July validation reward. Primary selection uses the same objective as the oracle, without the additional duration/electrical service gate. All physical constraints remain enforced. Also report the historical gated checkpoint as sensitivity analysis.",
+  "training": "2019-06-01 through 2019-07-17",
+  "validation": "13 complete shared dates, 2019-07-18 through 2019-07-31",
+  "evaluation": "31 shared August dates; historically exposed development cohort, not an untouched test set",
+  "primary_metric": "Negative undiscounted reward per home/day; lower is better",
+  "secondary_metrics": ["bill before demand-response credits", "squared thermal discomfort", "violation hours", "daily peak deviation", "task completion"],
+  "oracle": "Existing receipt-checked perfect-foresight paper_reward optimum with matched original physics, tariffs and home order; August is evaluation-only.",
+  "rules": [
+    "Complete all nine training runs before August evaluation.",
+    "No extension or config change based on these August results.",
+    "Keep every seed and method, including losses and failure cases.",
+    "The baseline matches active actor and state-value parameter counts to within 0.02 percent; unused legacy Q parameters are excluded.",
+    "No claim of privacy guarantees, SOTA, real-world optimality or oracle parity without supporting evidence.",
+    "No change to device constraints, comfort band, tariff or peer settlement to manufacture gains."
+  ]
+}

@@ -1,0 +1,9 @@
+# Tested Python 3.12 environment. The TabPFN weights have separate access/license terms.
+numpy==2.5.3
+pandas==2.3.3
+scipy==1.18.1
+scikit-learn==1.9.0
+matplotlib==3.11.2
+torch==2.14.0
+tabpfn==9.0.0
+pyscipopt==6.2.1

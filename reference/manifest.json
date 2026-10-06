@@ -1,0 +1,8 @@
+{
+  "revision": "e34da8b68c646ae3d6c818ad13f2020e6ba06c73",
+  "sha256": {
+    "environment.py": "592fbe13b65e94dfe9d74b4fba65b449b7b0fca481e00b86bb02680218c63f3c",
+    "em_strategy.py": "95c98f2b5f49ea6dc5d5d3886bb6c3df0b5e375186874aa082ef83e87cbe1b7a",
+    "train.py": "007100d3a527f885f8c2cd6c573abf6fadd7f71412d92cee89d0efa5dc0d1f4b"
+  }
+}

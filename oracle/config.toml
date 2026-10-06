@@ -1,0 +1,54 @@
+# Relative paths resolve from this file. Use a fresh output for every scenario.
+name = "original"
+data_dir = "../dataset/split_homes_clean"
+output = "../results/oracle/original_validation"
+split = "validation" # validation: July 18–31; test: August
+home_ids = [27, 950, 1222, 3000, 3488, 3517, 5587, 5679, 5997, 9053] # Ring order matters.
+days = 0 # All shared complete dates; use 1 for a smoke experiment.
+objectives = ["paper_reward", "comfort_first"]
+
+# Grid price = recorded base × multiplier + training-fitted ToU (when enabled).
+base_price_multiplier = 1.0
+tou_enabled = true
+tou_blocks = 5
+# For a fixed total grid price, set tou_enabled=false and uncomment:
+# flat_price_per_kwh = 0.15
+# Or set hourly_prices_per_kwh to 24 total grid prices; never combine both.
+export_price = 0.025 # $/kWh
+export_cap_enabled = true
+export_cap_kwh = 2.5 # Legacy pre-grid plus peer export accounting.
+peer_trading = true
+peer_price = 0.10 # $/kWh; original greedy ring settlement.
+dr_enabled = true
+dr_limit = 5.0 # kW
+dr_penalty = 0.50 # $/kWh above threshold.
+dr_incentive = 0.025 # $/kWh below threshold.
+fixed_cost = 5.0 # $/month
+
+# Individual comfort and original daily appliance constraints.
+temperature_min = 18.0 # °C
+temperature_max = 22.0 # °C
+initial_temperature = 23.0 # °C
+ac_energy_quota = true # Disable only as an explicit change of physical scenario.
+alpha = 0.005 # Original WM timing penalty.
+beta = 0.08 # Original squared thermal-discomfort penalty.
+thermal_inertia = 0.7
+thermal_gain = 10.0
+max_power_AC = 2.5 # kW
+max_power_EV = 6.0 # kW
+max_power_BESS = 2.4 # kW
+max_capacity_EV = 24.0 # kWh
+max_capacity_BESS = 6.4 # kWh
+efficiency_EV = 0.95
+efficiency_BESS = 0.95 # Original same-sign equation for charge and discharge.
+initial_battery_soe = 0.2 # Daily reset; no terminal equality is added.
+time_ini_EV = 0
+time_end_EV = 8
+time_ini_WM = 10
+time_end_WM = 20
+wm_duration = 3 # Hours; all timing settings are integer hours.
+
+# Certification limits: a timeout incumbent never counts as optimal.
+workers = 4
+time_limit = 600 # Seconds per solver invocation, not per experiment.
+gap = 0.0000001

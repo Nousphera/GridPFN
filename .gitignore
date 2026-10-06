@@ -1,0 +1,34 @@
+# Python environments, build products and caches
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.pypirc
+
+# Experiments, model weights and private research
+/results/
+/wiki/
+/train_test/
+*.log
+*.pt
+*.pth
+*.safetensors
+
+# Licensed source inputs stay local; demo.py generates public example inputs.
+/dataset/split_homes_clean/
+/dataset/temp_price_newyork.csv

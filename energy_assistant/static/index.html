@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>GridPFN Home · Your home energy, explained</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script defer src="/static/calendar.js"></script>
+    <script defer src="/static/insights.js"></script>
+    <script defer src="/static/explanation.js"></script>
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar app-topbar">
+      <a class="brand" href="/" aria-label="GridPFN Home"
+        ><span class="brand-icon">⌂</span>GridPFN<span>Home</span></a
+      >
+      <div class="app-heading">
+        <strong>YOUR HOME ENERGY, EXPLAINED</strong
+        ><span>Powered by <b id="model">TabPFN-3.5</b></span>
+      </div>
+      <div class="header-actions">
+        <div class="mode"><i></i><span id="mode">Connecting…</span></div>
+        <button id="settings-open" class="secondary">⚙ Settings</button
+        ><a id="export" class="secondary disabled" aria-disabled="true"
+          >↓ My energy report</a
+        >
+      </div>
+    </header>
+    <div class="layout">
+      <aside>
+        <div class="selector-box">
+          <div class="home-identity">
+            <span>YOUR HOME</span><strong id="home-name">Getting ready…</strong>
+          </div>
+          <input type="hidden" id="home" /><label for="calendar-toggle"
+            >Calendar</label
+          ><button
+            type="button"
+            id="calendar-toggle"
+            class="calendar-launch"
+            disabled
+          >
+            <span id="calendar-selection-mode">Day</span
+            ><strong id="calendar-selection">Choose a date</strong
+            ><span aria-hidden="true">▦</span></button
+          ><input id="date" type="hidden" /><input
+            id="end-date"
+            type="hidden"
+          /><label class="planning-label" for="planning-hour">Plan from</label
+          ><select id="planning-hour">
+            <option value="0">00:00 · start of day</option>
+            <option value="6" selected>06:00 · morning</option>
+            <option value="12">12:00 · midday</option>
+            <option value="18">18:00 · evening</option>
+          </select>
+        </div>
+      </aside>
+      <main>
+        <section id="conversation" aria-label="Conversation">
+          <div class="welcome overview-welcome">
+            <div class="overview-title">
+              <div><h2>Energy overview</h2></div>
+              <span id="overview-evidence" class="tag simulated"
+                >Simulated</span
+              >
+            </div>
+            <section
+              id="energy-overview"
+              aria-label="Daily energy overview"
+              aria-busy="true"
+            >
+              <div class="overview-toolbar">
+                <div class="overview-month">
+                  <button
+                    id="overview-prev"
+                    class="icon-button"
+                    aria-label="Previous overview month"
+                  >
+                    ‹</button
+                  ><strong id="overview-month">Loading…</strong
+                  ><button
+                    id="overview-next"
+                    class="icon-button"
+                    aria-label="Next overview month"
+                  >
+                    ›
+                  </button>
+                </div>
+                <label class="sr-only" for="overview-plan"
+                  >Energy plan shown</label
+                ><select
+                  id="overview-plan"
+                  aria-label="Energy plan shown"
+                ></select>
+              </div>
+              <div class="overview-totals">
+                <div>
+                  <strong id="overview-cash">—</strong
+                  ><span>Net energy balance · USD</span>
+                </div>
+                <div>
+                  <strong id="overview-comfort">—</strong
+                  ><span>Days comfortable all day</span>
+                </div>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span
+                ><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+              <div
+                id="overview-days"
+                class="calendar-grid"
+                aria-label="Daily comfort and energy balance"
+              ></div>
+              <div class="overview-legend">
+                <span
+                  >Comfortable
+                  <i class="comfort-gradient" aria-hidden="true"></i>
+                  Uncomfortable</span
+                ><span>+ credit · − cost</span>
+              </div>
+              <div
+                id="overview-detail"
+                class="overview-detail"
+                aria-live="polite"
+              >
+                Choose a day to see its costs and comfort.
+              </div>
+              <button id="overview-compare" class="secondary">
+                Compare plans for this day ↗
+              </button>
+              <details class="overview-method">
+                <summary>About this overview</summary>
+                <p id="overview-method"></p>
+                <p>
+                  Costs and comfort refer to the same selected plan. Days are
+                  simulated separately. Credits are net energy credits, not
+                  guaranteed profit; this is not a utility invoice. Grey dates
+                  have no results.
+                </p>
+              </details>
+            </section>
+            <div class="prompts">
+              <button
+                data-question="Give me a breakdown of my electricity costs by appliance."
+              >
+                ↗ &nbsp; Where did my money go?</button
+              ><button
+                data-question="Explain the TabPFN forecast and its influences."
+              >
+                ↗ &nbsp; What does TabPFN see?</button
+              ><button
+                data-question="When should I run cooling, laundry and charge the car today?"
+              >
+                ↗ &nbsp; Help me plan my day
+              </button>
+            </div>
+          </div>
+        </section>
+        <div class="composer-wrap">
+          <form id="composer">
+            <label class="sr-only" for="question"
+              >Ask about your home energy</label
+            ><input
+              id="question"
+              maxlength="2000"
+              placeholder="Why is my bill high? What could I change?"
+              autocomplete="off"
+              disabled
+            /><button
+              id="send"
+              type="submit"
+              aria-label="Send question"
+              disabled
+            >
+              ↑
+            </button>
+          </form>
+          <div id="error" role="alert"></div>
+        </div>
+      </main>
+    </div>
+    <dialog id="calendar-dialog" aria-labelledby="calendar-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">YOUR ENERGY, OVER TIME</span>
+          <h2 id="calendar-title">Calendar</h2>
+        </div>
+        <button
+          id="calendar-close"
+          class="icon-button"
+          aria-label="Close calendar"
+        >
+          ×
+        </button>
+      </div>
+      <div class="period-tabs" aria-label="Period length">
+        <button data-period="day">Day</button
+        ><button data-period="week">Week</button
+        ><button data-period="month">Month</button
+        ><button data-period="year">Year</button
+        ><button data-period="custom">Custom</button>
+      </div>
+      <div class="calendar-nav">
+        <button
+          id="calendar-prev"
+          class="icon-button"
+          aria-label="Previous month"
+        >
+          ‹</button
+        ><select id="calendar-month" aria-label="Month"></select
+        ><select id="calendar-year" aria-label="Year"></select
+        ><button id="calendar-next" class="icon-button" aria-label="Next month">
+          ›
+        </button>
+      </div>
+      <div class="calendar-weekdays" aria-hidden="true">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span
+        ><span>S</span><span>S</span>
+      </div>
+      <div
+        id="calendar-days"
+        class="calendar-grid"
+        aria-label="Choose dates"
+      ></div>
+      <div class="overview-legend">
+        <span
+          >Comfortable
+          <i class="comfort-gradient" aria-hidden="true"></i>
+          Uncomfortable</span
+        ><span>+ credit · − cost</span>
+      </div>
+      <p id="calendar-plan" class="small muted"></p>
+      <div class="range-fields">
+        <label>From<input type="date" id="range-start" /></label
+        ><label>To<input type="date" id="range-end" /></label>
+      </div>
+      <p id="calendar-coverage" class="coverage-note" aria-live="polite"></p>
+      <button id="calendar-apply" class="primary-button">
+        Explore this period
+      </button>
+    </dialog>
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">MAKE IT YOURS</span>
+          <h2 id="settings-title">Chat settings</h2>
+        </div>
+        <button
+          id="settings-close"
+          class="icon-button"
+          aria-label="Close settings"
+        >
+          ×
+        </button>
+      </div>
+      <form id="settings-form">
+        <label for="chat-provider">How would you like to chat?</label
+        ><select id="chat-provider">
+          <option value="local">On this computer · Qwen3.5-2B</option>
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic · Claude</option>
+          <option value="compatible">Another compatible provider</option>
+          <option value="ollama">My Ollama server</option>
+          <option value="guided">Guided mode · no language model</option>
+        </select>
+        <p id="provider-note" class="small muted"></p>
+        <div id="provider-fields">
+          <label for="chat-model">Model name</label
+          ><input
+            id="chat-model"
+            autocomplete="off"
+            placeholder="The model available from your provider"
+          />
+          <div id="endpoint-field">
+            <label for="chat-endpoint">API endpoint</label
+            ><input id="chat-endpoint" type="url" placeholder="https://…" />
+          </div>
+          <label for="chat-key">API key</label
+          ><input
+            id="chat-key"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Leave blank to keep the saved key"
+          /><label class="checkbox-label"
+            ><input type="checkbox" id="clear-chat-key" /> Remove the saved
+            key</label
+          >
+        </div>
+        <p class="small muted">
+          Energy predictions and calculations stay local. Cloud chat receives
+          your question and relevant earlier questions, including any information
+          you type into them.
+        </p>
+        <div id="settings-message" role="status"></div>
+        <button type="submit" class="primary-button">Save settings</button>
+      </form>
+    </dialog>
+  </body>
+</html>

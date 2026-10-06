@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GridPFN seasonal performance: six matched forecasting-and-control approaches, all households, and a perfect-future reference.">
+  <title>GridPFN · Performance</title>
+  <link rel="stylesheet" href="performance.css">
+</head>
+<body>
+  <a class="skip-link" href="#comparison">Skip to results</a>
+  <header>
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">G</span> GridPFN</a>
+    <nav aria-label="Main navigation"><a href="index.html">Overview</a><a href="https://github.com/Nousphera/GridPFN">Source ↗</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">SEASONAL PERFORMANCE</p>
+      <h1>The impact of TabPFN</h1>
+      <p class="lead">Bill, comfort and control across six matched approaches.</p>
+    </section>
+    <div id="fixture-note" class="fixture-note" hidden>Synthetic UI test fixture — not experiment results.</div>
+    <section id="comparison" class="comparison" aria-labelledby="comparison-title">
+      <h2 id="comparison-title" class="sr-only">Compare performance</h2>
+      <div class="control-bar"><div class="metric-buttons" role="group" aria-label="Choose a performance measure"><button type="button" data-metric="energy_bill_without_dr" aria-pressed="false" disabled>Electricity bill</button><button type="button" data-metric="comfort_pct" aria-pressed="false" disabled>Comfort</button><button type="button" data-metric="objective" aria-pressed="true" disabled>Combined objective</button></div><label class="period-label" for="period">Evaluation period<select id="period" disabled><option value="pooled">All months</option></select></label></div>
+      <div id="unavailable" class="unavailable" role="status"><span class="status-mark" aria-hidden="true">○</span><div><h3 id="status-title">Loading verified evidence</h3><p id="status-detail">The comparison will appear when its recorded results are available.</p></div></div>
+      <div id="results" hidden>
+        <div id="comparisons" class="comparisons" aria-live="polite" aria-label="TabPFN differences from each comparator"></div>
+        <div class="result-card">
+          <div class="chart-description"><p id="period-description"></p><div class="legend"><span><i class="home-dot"></i> Household</span><span><i class="mean-line"></i> Mean ± household SD</span></div></div>
+          <p id="metric-unit" class="metric-unit"></p>
+          <div id="chart"></div>
+        </div>
+        <details class="supporting" id="numeric-details"><summary>All values</summary><div class="table-wrap" tabindex="0" aria-label="All methods and measures; scroll horizontally on small screens"><table><caption id="table-caption">All methods · household mean ± sample SD</caption><thead><tr><th scope="col">Method</th><th scope="col">Bill ($/day) ↓</th><th scope="col">Comfort (%) ↑</th><th scope="col">Objective ↓</th></tr></thead><tbody id="values"></tbody></table></div></details>
+        <div class="evidence-links" id="downloads"><a href="performance.json" download>Evidence JSON ↗</a><a href="performance.svg">Full figure ↗</a><a href="performance.pdf">Print-ready PDF ↗</a><a href="https://github.com/Nousphera/GridPFN/blob/main/docs/PERFORMANCE.md">Protocol & results ↗</a></div>
+        <details class="supporting" id="forecast-details"><summary>Forecasts & training</summary><p class="small">Forecast accuracy and control quality answer different questions. RMSE is computed within each household, then summarized across households.</p><div class="table-wrap" tabindex="0" aria-label="Forecast errors for every method"><table><thead><tr><th scope="col">Method</th><th scope="col">Load RMSE (kWh)</th><th scope="col">Solar RMSE (kWh)</th><th scope="col">Temperature RMSE (°C)</th><th scope="col">Refit episodes</th></tr></thead><tbody id="forecast-values"></tbody></table></div><p id="budget-note" class="small"></p></details>
+        <details class="supporting" id="method-details"><summary>Method details</summary><p id="finding"></p><p class="small">Each dot is one household’s average. Mean ± sample SD describes differences between homes, not a confidence interval or variation across seeds. Comparisons subtract the other method from TabPFN. Percent differences use the other method’s positive mean; zero or negative baselines use an absolute difference. Comfort uses percentage points.</p><p id="oracle-note" class="small"></p><p class="small">Each test month follows a separate prior-week selection and a refit on all earlier training and validation days. All final checkpoints are frozen before test scoring. Earlier months become historical data for later folds; October trains no reported model.</p><p class="small">One seed, the same homes, and June–October observations. These results do not establish winter performance, generalization to unseen homes, real-world savings, or a globally optimal learned policy. TabFM weights retain their research-only license.</p></details>
+      </div>
+    </section>
+  </main>
+  <footer><span>GridPFN · built on FedDMPQ</span><span>Recorded simulation evidence · no live household control</span></footer>
+  <script src="performance.js"></script>
+</body>
+</html>

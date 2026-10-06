@@ -1,0 +1,1 @@
+"""GridPFN legacy package."""

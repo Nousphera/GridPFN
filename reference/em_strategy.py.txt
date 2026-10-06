@@ -1,0 +1,295 @@
+﻿import copy
+import numpy as np
+from environment import HOME_ENERGY_MGNT
+
+
+def make_em_strategy():
+    return {"tou": {"enabled": True, "n_blocks": 5}, "dr_limit": 5.0, "dr_penalty": 0.50,
+            "dr_incentive": 0.025, "pv_curtail": 2.5, "export_price": 0.025}
+
+class P2PTrading:
+    def is_enabled(self, p2p_config):
+        return bool(p2p_config and p2p_config.get("enabled") and p2p_config.get("price") is not None)
+
+    def price(self, p2p_config):
+        return float(p2p_config.get("price"))
+
+    def _resolve_agent(self, client, use_fed):
+        if isinstance(use_fed, str):
+            mode = use_fed.lower()
+            agent = getattr(client, f"{mode}_agent", None)
+            return agent if agent is not None else client.agent
+        return client.fedavg_agent if use_fed else client.agent
+
+    def _init_episode_contexts(self, clients, episode, use_fed):
+        contexts = []
+        for client in clients:
+            index = episode % len(client.train_data)
+            env = HOME_ENERGY_MGNT(client.train_data[index], scaler=client.scaler,
+                                   fixed_cost=getattr(client, "fixed_cost", 0.0))
+            if getattr(client, "em_strategy", None):
+                apply_em_strategy(env, client.em_strategy)
+            state = env.reset()
+            contexts.append({"client": client, "env": env, "agent": self._resolve_agent(client, use_fed),
+                             "state": state, "pending": None, "episode_reward": 0.0,
+                             "actor_losses": [], "critic_losses": []})
+        return contexts
+
+    def run_episode(self, clients, episode, use_fed=False, p2p_config=None):
+        if not self.is_enabled(p2p_config):
+            return []
+
+        p2p_price = self.price(p2p_config)
+        contexts = self._init_episode_contexts(clients, episode, use_fed)
+
+        done_flags = [False for _ in contexts]
+        while not all(done_flags):
+            step_infos = []
+            for ctx in contexts:
+                agent = ctx["agent"]
+                action = agent.choose_action(ctx["state"])
+                next_state, reward_elec, _, reward_comf, done = ctx["env"].step(action)
+                ctx["pending"] = (ctx["state"], ctx["env"].action, next_state, done)
+                ctx["state"] = next_state
+                step_infos.append({"reward_elec": reward_elec, "reward_comf": reward_comf,
+                                   "net_load": ctx["env"].net_load, "pv_surplus": ctx["env"].pv_surplus,
+                                   "price": ctx["env"].price, "export_price": ctx["env"].export_price,
+                                   "delta_t": ctx["env"].delta_t})
+
+            adjustments, _, p2p_exports = self.compute_adjustments(step_infos, p2p_price)
+
+            for i, ctx in enumerate(contexts):
+                if p2p_exports[i] > 0:
+                    ctx["env"].exported_kwh += p2p_exports[i] * ctx["env"].delta_t
+
+            for i, ctx in enumerate(contexts):
+                info = step_infos[i]
+                reward_elec_adj = info["reward_elec"] + adjustments[i]
+                reward_comf = info["reward_comf"]
+                reward_adj = reward_elec_adj + reward_comf
+
+                state, action, next_state, done = ctx["pending"]
+                ctx["agent"].store_transition(state, action, reward_adj, next_state, done)
+                loss_actor, loss_critic = ctx["agent"].learn()
+                if loss_actor is not None and loss_critic is not None:
+                    ctx["actor_losses"].append(loss_actor)
+                    ctx["critic_losses"].append(loss_critic)
+
+                ctx["episode_reward"] += reward_adj
+                done_flags[i] = done
+
+        episode_results = []
+        for ctx in contexts:
+            avg_actor_loss = sum(ctx["actor_losses"]) / len(ctx["actor_losses"]) if ctx["actor_losses"] else None
+            avg_critic_loss = sum(ctx["critic_losses"]) / len(ctx["critic_losses"]) if ctx["critic_losses"] else None
+            del ctx["env"]
+            episode_results.append((ctx["episode_reward"], avg_actor_loss, avg_critic_loss))
+
+        return episode_results
+
+    def compute_adjustments(self, step_infos, p2p_price):
+        n = len(step_infos)
+        deficits = [max(0.0, info["net_load"]) for info in step_infos]
+        surpluses = [max(0.0, info["pv_surplus"]) for info in step_infos]
+        p2p_imports = [0.0 for _ in range(n)]
+        p2p_exports = [0.0 for _ in range(n)]
+
+        for i in range(n):
+            surplus = surpluses[i]
+            if surplus <= 0:
+                continue
+
+            for neighbor in ((i - 1) % n, (i + 1) % n):
+                if surplus <= 0:
+                    break
+                if deficits[neighbor] <= 0:
+                    continue
+                seller_ok = p2p_price > float(step_infos[i].get("export_price", 0.0))
+                buyer_ok = p2p_price < float(step_infos[neighbor].get("price", 0.0))
+                if not (seller_ok and buyer_ok):
+                    continue
+
+                trade = min(surplus, deficits[neighbor])
+                surplus -= trade
+                deficits[neighbor] -= trade
+                p2p_exports[i] += trade
+                p2p_imports[neighbor] += trade
+
+        adjustments = [0.0 for _ in range(n)]
+        for i in range(n):
+            export_price = float(step_infos[i].get("export_price", 0.0))
+            price = float(step_infos[i].get("price", 0.0))
+            delta_t = float(step_infos[i].get("delta_t", 1.0))
+            if p2p_exports[i] > 0:
+                adjustments[i] += p2p_exports[i] * (p2p_price - export_price) * delta_t
+            if p2p_imports[i] > 0:
+                adjustments[i] += p2p_imports[i] * (price - p2p_price) * delta_t
+
+        return adjustments, p2p_imports, p2p_exports
+
+P2P_TRADING = P2PTrading()
+
+# Convert a normalized client feature value back to its original scale.
+def _denorm_client_feature(client, idx, value):
+    scaler = getattr(client, "scaler", None)
+    if not scaler:
+        return value
+    col_to_scaler_idx = scaler.get("col_to_scaler_idx", {})
+    scaler_idx = col_to_scaler_idx.get(idx, idx)
+    if scaler_idx is None:
+        return value
+    vmin = float(scaler["min"][scaler_idx])
+    vmax = float(scaler["max"][scaler_idx])
+    if vmax - vmin == 0:
+        return vmin
+    return value * (vmax - vmin) + vmin
+
+
+# TOU tariff class encapsulating all TOU tariff utilities and processing.
+class ToUTariff:
+    def __init__(self):
+        self._cache = {}
+
+    def build_tou_blocks(self, num_blocks, block_hours=None):
+        if isinstance(block_hours, (list, tuple)) and len(block_hours) >= 2:
+            parsed = [int(h) for h in block_hours]
+            parsed = sorted(set(max(0, min(24, h)) for h in parsed))
+            if not parsed or parsed[0] != 0:
+                parsed = [0] + parsed
+            if parsed[-1] != 24:
+                parsed = parsed + [24]
+            blocks = [(parsed[i], parsed[i + 1]) for i in range(len(parsed) - 1) if parsed[i + 1] > parsed[i]]
+            if blocks:
+                return blocks
+
+        n = int(num_blocks)
+        n = max(1, min(24, n))
+
+        base = 24 // n
+        rem = 24 % n
+        edges = [0]
+        cursor = 0
+        for i in range(n):
+            cursor += base + (1 if i < rem else 0)
+            edges.append(cursor)
+
+        return [(edges[i], edges[i + 1]) for i in range(len(edges) - 1)]
+
+    def compute_global_hourly_price_profile(self, clients):
+        hourly_values = [[] for _ in range(24)]
+
+        for client in clients:
+            for dataset in getattr(client, "train_data", []):
+                if dataset is None:
+                    continue
+                delta_t = float(getattr(client, "scaler", {}).get("delta_t", 1.0))
+                for row in dataset:
+                    step_of_day = int(round(float(row[2])))
+                    hour = int(np.clip(np.floor(step_of_day * delta_t), 0, 23))
+                    price_norm = float(row[3])
+                    price_raw = float(_denorm_client_feature(client, 3, price_norm))
+                    hourly_values[hour].append(max(0.0, price_raw))
+
+        hourly_profile = [None for _ in range(24)]
+        known = []
+        for hour in range(24):
+            vals = hourly_values[hour]
+            if vals:
+                mean_val = float(np.mean(vals))
+                hourly_profile[hour] = mean_val
+                known.append(mean_val)
+
+        fallback = float(np.mean(known)) if known else 0.0
+        for hour in range(24):
+            if hourly_profile[hour] is None:
+                hourly_profile[hour] = fallback
+
+        return hourly_profile
+
+    def compute_global_tou_prices(self, clients, num_blocks=5, block_hours=None):
+        n_blocks = int(num_blocks)
+
+        block_key = None
+        if isinstance(block_hours, (list, tuple)):
+            normalized_hours = [int(h) for h in block_hours]
+            block_key = tuple(normalized_hours)
+
+        cache_key = (tuple(id(c) for c in clients), n_blocks, block_key)
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return list(cached)
+
+        hourly_profile = self.compute_global_hourly_price_profile(clients)
+        blocks = self.build_tou_blocks(n_blocks, block_hours=block_hours)
+        tou_prices = [0.0 for _ in range(24)]
+
+        for start, end in blocks:
+            if end <= start:
+                continue
+            block_mean = float(np.mean(hourly_profile[start:end]))
+            for hour in range(start, end):
+                tou_prices[hour] = block_mean
+
+        for hour in range(24):
+            if tou_prices[hour] == 0.0:
+                tou_prices[hour] = float(hourly_profile[hour])
+
+        self._cache[cache_key] = list(tou_prices)
+        return tou_prices
+
+    def process_strategy(self, tou_cfg, clients=None, env=None):
+        tou_cfg = tou_cfg or {}
+        if not tou_cfg.get("enabled", False):
+            return {}
+
+        if env is not None:
+            hourly_prices = tou_cfg.get("hourly_prices")
+            env.tou_prices_by_hour = None
+            if isinstance(hourly_prices, (list, tuple)) and len(hourly_prices) >= 24:
+                env.tou_prices_by_hour = [float(x) for x in hourly_prices[:24]]
+            return {}
+
+        tou = copy.deepcopy(tou_cfg)
+        n_blocks = int(tou.get("n_blocks", 5))
+        tou["n_blocks"] = n_blocks
+        tou["hourly_prices"] = self.compute_global_tou_prices(
+            clients or [], num_blocks=n_blocks, block_hours=tou.get("block_hours"))
+        return {"tou": tou}
+
+# Compose the fixed EM strategy with the global ToU tariff.
+def compose_em_strategy(em_strategy, clients):
+    base = copy.deepcopy(em_strategy)
+    tou_updates = ToUTariff().process_strategy(base.get("tou") or {}, clients=clients)
+    base.update(tou_updates)
+    return base
+
+# Apply a composed EM strategy to the active environment configuration.
+def apply_em_strategy(env, em_strategy):
+    if not em_strategy:
+        return
+
+    env.tou_prices_by_hour = None
+    if "export_price" in em_strategy:
+        env.export_price = float(em_strategy["export_price"])
+    if "pv_curtail" in em_strategy:
+        env.export_cap_kwh = (
+            float(em_strategy["pv_curtail"])
+            if em_strategy["pv_curtail"] is not None
+            else None
+        )
+    if "dr_limit" in em_strategy:
+        env.dr_limit = float(em_strategy["dr_limit"]) if em_strategy["dr_limit"] is not None else None
+    if "dr_penalty" in em_strategy:
+        env.dr_penalty = float(em_strategy["dr_penalty"])
+    if "dr_incentive" in em_strategy:
+        env.dr_incentive = float(em_strategy["dr_incentive"])
+
+    ToUTariff().process_strategy(em_strategy.get("tou") or {}, env=env)
+
+    for key in ["delta_t", "temperature_min", "temperature_max", "max_power_BESS", "wm_duration", "time_ini_WM",
+                "time_end_WM", "time_ini_EV", "time_end_EV"]:
+        if key in em_strategy:
+            setattr(env, key, type(getattr(env, key))(em_strategy[key]))
+
+    if "wm_duration" in em_strategy and hasattr(env, "max_duration"):
+        env.max_duration = env.wm_duration

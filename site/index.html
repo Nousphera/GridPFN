@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GridPFN combines home-specific TabPFN forecasts, federated appliance control and an inspectable local energy assistant.">
+  <title>GridPFN · Forecast. Plan. Understand.</title>
+  <link rel="stylesheet" href="performance.css">
+  <link rel="stylesheet" href="overview.css">
+</head>
+<body>
+  <a class="skip-link" href="#how">Skip to how it works</a>
+  <header>
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">G</span> GridPFN</a>
+    <nav aria-label="Main navigation"><a href="performance.html?scope=foundations">Evidence</a><a href="https://github.com/Nousphera/GridPFN">Source ↗</a></nav>
+  </header>
+  <main>
+    <section class="intro hero">
+      <p class="eyebrow">TABPFN-3.5 · HOME ENERGY</p>
+      <h1>Your home energy.<br>Forecast. Plan. Understand.</h1>
+      <p class="lead">Charge now, or wait for solar? Cool earlier, or pay more later? GridPFN learns from your home's history to forecast energy needs, compare appliance schedules and explain the tradeoffs.</p>
+      <div class="actions"><a class="button primary" href="https://github.com/Nousphera/GridPFN/blob/main/docs/REPRODUCE.md">Run your home <span aria-hidden="true">↗</span></a><a class="button" href="performance.html?scope=foundations">Inspect the evidence <span aria-hidden="true">→</span></a></div>
+      <p class="hero-note">Personalized HEMS · Federated learning · Agent + MCP · Local by default</p>
+    </section>
+    <section class="principles" aria-label="Three parts of the system">
+      <article><span class="number">01</span><h2>Forecast ahead.</h2><p>TabPFN uses your home's labeled history to predict six hours of demand, solar and temperature.</p></article>
+      <article><span class="number">02</span><h2>Coordinate locally.</h2><p>A FedAvg-trained controller schedules cooling, charging, storage and washing within appliance constraints.</p></article>
+      <article><span class="number">03</span><h2>See the tradeoff.</h2><p>Inspect forecasts, compare simulated bills and comfort, or ask the assistant through structured tools.</p></article>
+    </section>
+    <section id="how" class="workflow">
+      <div class="section-heading"><div><p class="eyebrow">HOW IT WORKS</p><h2>Predictions become a plan.</h2></div><a class="text-link" href="https://github.com/Nousphera/GridPFN/blob/main/docs/architecture.md">Inside the system ↗</a></div>
+      <a href="process.svg" aria-label="Open the full GridPFN process diagram"><img src="process.svg" width="1200" height="664" alt="Home history feeds TabPFN forecasts and a local PPO controller, with FedAvg during training and an optional LLM using structured tools."></a>
+    </section>
+    <section class="evidence-invite">
+      <div><p class="eyebrow">MEASURE WHAT MATTERS</p><h2>Small differences. Clear comparisons.</h2><p>TabPFN, TabFM and TabICLv2: compare simulated bills, comfort and control against a perfect-future reference.</p></div>
+      <a class="button primary" href="performance.html?scope=foundations">Explore the comparison →</a>
+    </section>
+    <section class="result-preview">
+      <a href="performance.html?scope=foundations" aria-label="Open the interactive foundation-model comparison"><img src="foundation-comparison.svg" alt="TabPFN bills are 0.42 percent below TabFM and 0.07 percent below TabICLv2 in the recorded simulation" loading="lazy"></a>
+    </section>
+    <section class="workflow" id="training">
+      <div class="section-heading"><div><p class="eyebrow">LEARN TOGETHER</p><h2>Forecast locally. Coordinate together.</h2></div></div>
+      <img src="assets/gridpfn-training.png" alt="Local TabPFN forecast features, shared FedAvg actor weights and peer-to-peer energy exchange during simulated training" loading="lazy">
+    </section>
+    <section class="walkthrough" id="walkthrough">
+      <div><p class="eyebrow">YOUR HOME, EXPLAINED</p><h2>From a question to an energy plan.</h2><p>Ask about bills, compare schedules and inspect the readings behind a TabPFN forecast.</p><p class="small">20-second walkthrough · generated example household</p></div>
+      <video controls playsinline preload="none" poster="assets/gridpfn-assistant.gif" aria-label="GridPFN assistant walkthrough"><source src="assets/gridpfn-assistant.mp4" type="video/mp4"></video>
+    </section>
+    <section class="getting-started">
+      <div><p class="eyebrow">TRAIN → EXPORT → SERVE</p><h2>One model bundle. One home.</h2><p>Train with the shared configuration, then point the assistant at a home model directory.</p><a class="text-link" href="https://github.com/Nousphera/GridPFN/blob/main/energy_assistant/README.md">Local assistant & MCP setup ↗</a></div>
+      <pre aria-label="Example training and launch commands"><code>python train.py --config configs/gridpfn.toml
+
+python hems_assistant.py \
+  --household results/personalized/models/home_27 \
+  --port 8770</code></pre>
+    </section>
+    <p class="scope">Research simulation, not live appliance control. Local execution is not a formal privacy guarantee. Household data and pretrained weights retain their own access and license terms.</p>
+  </main>
+  <footer><span>GridPFN · built on FedDMPQ</span><span>Apache-2.0 code · TabPFN-3.5</span></footer>
+</body>
+</html>

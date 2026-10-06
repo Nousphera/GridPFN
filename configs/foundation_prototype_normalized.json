@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "seed": 41,
+  "home_ids": [
+    27,
+    950
+  ],
+  "context_rows": 512,
+  "n_estimators": 1,
+  "horizon": 6,
+  "episodes": 1000,
+  "actor_width": 256,
+  "value_width": 64,
+  "methods": [
+    "history",
+    "persistence",
+    "trees",
+    "tabpfn",
+    "tabfm",
+    "tabicl"
+  ],
+  "blocks": [
+    7,
+    21,
+    35,
+    47
+  ],
+  "selection": "July best objective; also retain initial and final fixed-budget policy metrics",
+  "scope": "Single-seed two-home development prototype; no August evaluation, no confidence interval or superiority claim",
+  "representation": "17 raw physical observations plus 8 history/calendar coordinates, 18 hourly forecasts and 6 horizon-validity masks",
+  "synthetic_augmentation": false,
+  "rules": [
+    "Use identical caller-selected labeled context rows and query rows for every predictor.",
+    "Fit only on complete dates strictly preceding each query block.",
+    "Use the same 2-home training-only shared scaler for feature preparation and PPO.",
+    "All policies use raw mode; no hidden TabPFN embedding inside a competitor's controller.",
+    "Keep original physics, reward, tariffs, day shuffling, initialization and exploration identical.",
+    "Evaluate real model query-batch causality; no silent fallback or failed arm omission.",
+    "Models have different pretrained capacity and inference compute; record both instead of claiming equality."
+  ],
+  "feature_scaling": "shared_training_mean_std",
+  "revision_reason": "Training-only audit found PV feature magnitudes above 11 under inherited fixed divisors. Replicate all arms with shared training-only target standardization before interpreting rankings."
+}

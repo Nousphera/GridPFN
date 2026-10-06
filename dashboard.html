@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FedDMPQ · Live training</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #182b3b;
+        --muted: #6b7c8c;
+        --line: #e4eaf0;
+        --blue: #2563eb;
+        --orange: #c56710;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f6f8fb;
+        color: var(--ink);
+        font:
+          12px -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        height: 100dvh;
+        min-height: 430px;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 2000px;
+        margin: auto;
+      }
+      header,
+      .toolbar,
+      footer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 650;
+        letter-spacing: -0.3px;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #22a06b;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      #status {
+        color: var(--muted);
+      }
+      #updated {
+        margin-left: auto;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .toolbar {
+        gap: 10px;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--muted);
+      }
+      select,
+      input,
+      button {
+        font: inherit;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: white;
+        padding: 4px 6px;
+      }
+      select {
+        max-width: 210px;
+      }
+      input[type="number"] {
+        width: 49px;
+      }
+      input[type="checkbox"] {
+        accent-color: var(--blue);
+      }
+      a {
+        color: #315e96;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .legend {
+        display: inline-flex;
+        gap: 12px;
+        margin-left: auto;
+        color: var(--muted);
+      }
+      .key:before {
+        content: "";
+        width: 14px;
+        height: 2px;
+        background: var(--blue);
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+      .key.eval:before {
+        background: var(--orange);
+      }
+      #charts {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .card {
+        min-height: 0;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        padding: 9px 9px 4px;
+        display: flex;
+        flex-direction: column;
+      }
+      .heading {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+      }
+      .heading h2 {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .value {
+        margin-left: auto;
+        font-size: 13px;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+      }
+      .unit {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .plot {
+        flex: 1;
+        position: relative;
+        min-height: 0;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .tip {
+        position: absolute;
+        pointer-events: none;
+        display: none;
+        background: #172c40ee;
+        color: white;
+        padding: 5px 7px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: pre;
+        z-index: 2;
+        max-width: 95%;
+      }
+      footer {
+        font-size: 10px;
+        color: var(--muted);
+        gap: 10px;
+      }
+      #error {
+        color: #ac3434;
+      }
+      #logbox {
+        position: fixed;
+        bottom: 28px;
+        right: 16px;
+        background: white;
+        border: 1px solid var(--line);
+        box-shadow: 0 8px 32px #182b3b22;
+        border-radius: 8px;
+        padding: 12px;
+        max-width: 80vw;
+        z-index: 5;
+      }
+      pre {
+        white-space: pre-wrap;
+        max-height: 30vh;
+        overflow: auto;
+        margin: 6px 0 0;
+        font-size: 11px;
+      }
+      button {
+        cursor: pointer;
+      }
+      #progress {
+        height: 2px;
+        background: var(--line);
+        border-radius: 2px;
+      }
+      #progress span {
+        display: block;
+        height: 100%;
+        background: var(--blue);
+        transition: width 0.2s;
+      }
+      @media (max-width: 700px) {
+        main {
+          padding: 8px;
+          min-width: 620px;
+        }
+        .legend {
+          margin-left: 0;
+        }
+        .unit {
+          display: none;
+        }
+        .toolbar {
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1><span class="dot" id="dot"></span>FedDMPQ</h1>
+        <span id="status">Connecting…</span><span id="updated"></span>
+      </header>
+      <div class="toolbar">
+        <label
+          >Run
+          <select id="run">
+            <option value="">Follow active run</option>
+          </select></label
+        ><label
+          >Home
+          <select id="home">
+            <option value="">All homes</option>
+          </select></label
+        ><label
+          >Smooth
+          <input
+            id="window"
+            type="number"
+            min="1"
+            max="1500"
+            value="DEFAULT_WINDOW" /></label
+        ><label><input id="train" type="checkbox" checked />Train</label
+        ><label><input id="shade" type="checkbox" checked />±1 SD</label
+        ><label><input id="zoomPct" type="checkbox" checked />Zoom %</label
+        ><button id="pause">Pause</button
+        ><span class="legend"
+          ><span class="key">Train</span
+          ><span class="key eval" id="evalLabel">Evaluation</span></span
+        ><a id="png" href="/plot.png">PNG</a
+        ><a id="pdf" href="/plot.pdf">PDF</a>
+      </div>
+      <div id="progress"><span style="width: 0"></span></div>
+      <section
+        id="charts"
+        aria-label="Training and evaluation charts"
+      ></section>
+      <footer>
+        <span id="detail">Waiting for metrics</span
+        ><span id="finalTest"></span
+        ><span>Home SD bands (clipped to bounds); not seed uncertainty.</span
+        ><span id="error" role="alert"></span
+        ><button id="logs" style="margin-left: auto">Log</button>
+      </footer>
+      <div id="logbox" hidden>
+        <strong>Recent training output</strong>
+        <pre id="log"></pre>
+      </div>
+    </main>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const panels = [
+        ["reward", "Daily reward", "higher is better"],
+        ["actor_loss", "Actor objective / value", "train objective · eval −max Q"],
+        ["critic_loss", "Critic loss", "train TD objective · eval MSE"],
+        ["comfort_pct", "Thermal comfort", "% of timesteps"],
+        ["elec_cost", "Electrical objective", "$/day incl. DR/P2P"],
+        ["net_demand", "Net energy", "kWh/day"],
+        ["task_success_pct", "EV + WM completion", "% of home-days"],
+        ["comfort", "Discomfort", "penalty/day"],
+      ];
+      const schedulingPanels = [
+        ["elec_cost", "Objective including DR", "$/home/day"],
+        ["energy_bill_without_dr", "Energy bill without DR", "$/home/day"],
+        ["import", "Grid purchases", "kWh/home/day"],
+        ["comfort_pct", "Thermal comfort", "% of timesteps"],
+        ["pv_local_use_kwh", "PV retained locally", "kWh/home/day"],
+        ["pv_curtailed_kwh", "PV curtailed", "kWh/home/day"],
+        ["task_success_pct", "EV + WM completion", "% of home-days"],
+        ["reward", "Daily reward", "higher is better"],
+      ];
+      function setMode() {
+        const scheduling = summary.mode === "scheduling";
+        const chosen = (scheduling ? schedulingPanels : panels).map((p) => [...p]);
+        if (!scheduling && records.some(r => Number.isFinite(r.oracle_regret))) {
+          chosen[5] = ["oracle_regret", "Gap to oracle", "objective/home/day · lower is better"];
+          chosen[6] = ["q_return_rmse", "Value calibration", "V/Q vs actual greedy returns · RMSE"];
+          chosen[7] = ["excess_squared_violation", "Excess thermal violation", "°C²/day above unavoidable minimum"];
+        }
+        if (!scheduling && summary.learning_rule === "ppo") {
+          chosen[1] = ["actor_loss", "Actor objective", "train PPO · eval categorical NLL"];
+          chosen[2] = ["critic_loss", "Value loss", "train return MSE · eval V-TD MSE"];
+          if (summary.value_normalization)
+            chosen[2][2] = "train normalized MSE · eval V-TD MSE";
+          if (records.some(r => r.kind === "ppo_update"))
+            chosen[6] = ["value_explained_variance", "Stochastic value fit", "explained variance · same rollout"];
+        }
+        cards.forEach((card, i) => {
+          card.metric = chosen[i][0];
+          card.el.querySelector("h2").textContent = chosen[i][1];
+          card.el.querySelector(".unit").textContent = chosen[i][2];
+        });
+        $("window").disabled = scheduling;
+        $("train").disabled = scheduling;
+      }
+      const cards = panels.map(([metric, title, unit]) => {
+        const el = document.createElement("article");
+        el.className = "card";
+        el.innerHTML =
+          '<div class="heading"><h2>' +
+          title +
+          '</h2><span class="unit">' +
+          unit +
+          '</span><span class="value">—</span></div><div class="plot"><canvas aria-label="' +
+          title +
+          '" role="img"></canvas><div class="tip"></div></div>';
+        $("charts").appendChild(el);
+        return {
+          metric,
+          el,
+          canvas: el.querySelector("canvas"),
+          tip: el.querySelector(".tip"),
+          value: el.querySelector(".value"),
+          series: [],
+        };
+      });
+      let records = [],
+        cursor = 0,
+        generation = "",
+        busy = false,
+        paused = false,
+        summary = {},
+        selectionVersion = 0;
+      function fmt(v) {
+        if (!Number.isFinite(v)) return "—";
+        if (Math.abs(v) >= 10000) return v.toExponential(1);
+        if (Math.abs(v) >= 100) return v.toFixed(0);
+        if (Math.abs(v) >= 10) return v.toFixed(1);
+        return v.toFixed(2);
+      }
+      function series(metric, kind) {
+        const selected = $("home").value;
+        const window = Math.max(
+          1,
+          Math.min(1500, Number($("window").value) || 1),
+        );
+        const histories = new Map(),
+          points = [];
+        const rows = new Map();
+        const sourceKind = metric === "value_explained_variance"
+          ? (kind === "train" ? "ppo_update" : "none") : kind;
+        for (const r of records) if (r.kind === sourceKind) rows.set(r.episode, r);
+        for (const [episode, r] of [...rows].sort((a, b) => a[0] - b[0])) {
+          let values = [];
+          for (const h of r.homes || []) {
+            if (selected && String(h.home_id) !== selected) continue;
+            let v = h[metric];
+            if (metric === "comfort" && Number.isFinite(v)) v = -v;
+            if (kind === "train") {
+              const q = histories.get(h.home_id) || [];
+              q.push(Number.isFinite(v) ? v : null);
+              if (q.length > window) q.shift();
+              histories.set(h.home_id, q);
+              const present = q.filter(Number.isFinite);
+              if (!present.length) continue;
+              v = present.reduce((a, b) => a + b, 0) / present.length;
+            }
+            if (!Number.isFinite(v)) continue;
+            values.push(v);
+          }
+          if (values.length) {
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const sd = Math.sqrt(
+              values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length,
+            );
+            points.push({ x: episode, y: mean, sd: selected ? 0 : sd });
+          }
+        }
+        return points;
+      }
+      function draw(card) {
+        const canvas = card.canvas,
+          w = canvas.clientWidth,
+          h = canvas.clientHeight;
+        if (w < 20 || h < 20) return;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        const c = canvas.getContext("2d");
+        c.scale(dpr, dpr);
+        const lines = [
+          {
+            p: $("train").checked ? series(card.metric, "train") : [],
+            color: "#2563eb",
+            kind: "Train",
+          },
+          {
+            p: series(card.metric, "eval"),
+            color: "#c56710",
+            kind: summary.split || "Evaluation",
+          },
+        ];
+        card.series = lines;
+        const all = lines.flatMap((l) => l.p);
+        c.font = "10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif";
+        c.fillStyle = "#81909e";
+        if (!all.length) {
+          c.textAlign = "center";
+          c.fillText(
+            "Waiting for " +
+              (card.metric.includes("loss") || card.metric === "reward"
+                ? "metrics"
+                : "evaluation"),
+            w / 2,
+            h / 2,
+          );
+          card.value.textContent = "—";
+          return;
+        }
+        const band = $("shade").checked;
+        let lo = Math.min(...all.map((p) => p.y - (band ? p.sd : 0))),
+          hi = Math.max(...all.map((p) => p.y + (band ? p.sd : 0)));
+        if (card.metric.endsWith("_pct")) {
+          const pad = Math.max((hi-lo)*0.08, 0.5);
+          lo = $("zoomPct").checked ? Math.max(0,Math.min(98,lo-pad)) : 0;
+          hi = $("zoomPct").checked ? Math.min(100,Math.max(lo+1,hi+pad)) : 100;
+        } else {
+          const pad = (hi - lo) * 0.08 || Math.max(Math.abs(hi) * 0.08, 0.1);
+          lo -= pad;
+          hi += pad;
+          if (["critic_loss", "comfort"].includes(card.metric)) lo = Math.max(0,lo);
+        }
+        const maxX = Math.max(1, ...all.map((p) => p.x));
+        const margin = { l: 45, r: 7, t: 12, b: 23 };
+        const sx = (x) => margin.l + (x / maxX) * (w - margin.l - margin.r),
+          sy = (y) =>
+            margin.t + ((hi - y) / (hi - lo)) * (h - margin.t - margin.b);
+        card.mapping = { sx, sy, maxX, w, h, margin };
+        c.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+          const v = lo + ((hi - lo) * i) / 3,
+            y = sy(v);
+          c.strokeStyle = "#edf1f5";
+          c.beginPath();
+          c.moveTo(margin.l, y);
+          c.lineTo(w - margin.r, y);
+          c.stroke();
+          c.fillStyle = "#7a8997";
+          c.textAlign = "right";
+          c.fillText(fmt(v), margin.l - 6, y + 3);
+        }
+        for (const x of [0, Math.round(maxX / 2), maxX]) {
+          c.textAlign = x === maxX ? "right" : "center";
+          c.fillText(String(x), sx(x), h - 8);
+        }
+        c.save();
+        c.beginPath();
+        c.rect(
+          margin.l,
+          margin.t,
+          w - margin.l - margin.r,
+          h - margin.t - margin.b,
+        );
+        c.clip();
+        for (const line of lines) {
+          const pts = line.p;
+          if (!pts.length) continue;
+          if (band && pts.some((p) => p.sd)) {
+            c.fillStyle = line.color + "1a";
+            c.beginPath();
+            pts.forEach((p, i) =>
+              i
+                ? c.lineTo(sx(p.x), sy(p.y + p.sd))
+                : c.moveTo(sx(p.x), sy(p.y + p.sd)),
+            );
+            [...pts]
+              .reverse()
+              .forEach((p) => c.lineTo(sx(p.x), sy(p.y - p.sd)));
+            c.closePath();
+            c.fill();
+          }
+          c.strokeStyle = line.color;
+          c.lineWidth = 1.6;
+          c.beginPath();
+          pts.forEach((p, i) =>
+            i ? c.lineTo(sx(p.x), sy(p.y)) : c.moveTo(sx(p.x), sy(p.y)),
+          );
+          c.stroke();
+          if (line.kind !== "Train" || pts.length === 1) {
+            c.fillStyle = line.color;
+            for (const p of pts) {
+              c.beginPath();
+              c.arc(sx(p.x), sy(p.y), 2.2, 0, Math.PI * 2);
+              c.fill();
+            }
+          }
+        }
+        c.restore();
+        const last = (lines[1].p.length ? lines[1] : lines[0]).p.at(-1);
+        card.value.textContent =
+          fmt(last.y) + (card.metric.endsWith("_pct") ? "%" : "");
+        card.value.style.color = lines[1].p.length ? "#a3540b" : "#2563eb";
+      }
+      function drawAll() {
+        for (const card of cards) draw(card);
+        const q = new URLSearchParams({
+          window: $("window").value,
+          home: $("home").value,
+          run: $("run").value,
+        });
+        $("png").href = "/plot.png?" + q;
+        $("pdf").href = "/plot.pdf?" + q;
+      }
+      for (const card of cards) {
+        card.canvas.onmousemove = (e) => {
+          if (!card.mapping) return;
+          const x = e.offsetX,
+            m = card.mapping;
+          const ep =
+            ((x - m.margin.l) / (m.w - m.margin.l - m.margin.r)) * m.maxX;
+          let text = [];
+          for (const line of card.series) {
+            if (!line.p.length) continue;
+            const p = line.p.reduce((a, b) =>
+              Math.abs(a.x - ep) < Math.abs(b.x - ep) ? a : b,
+            );
+            text.push(
+              line.kind + " · " + (summary.mode === "scheduling"
+                ? (records.find(r => r.kind === "eval" && r.episode === p.x)?.policy || p.x)
+                : "ep " + p.x) + "\n" + fmt(p.y) + " ± " + fmt(p.sd),
+            );
+          }
+          card.tip.textContent = text.join("\n");
+          card.tip.style.display = "block";
+          card.tip.style.left = Math.max(0, Math.min(x + 8, m.w - 145)) + "px";
+          card.tip.style.top = "4px";
+        };
+        card.canvas.onmouseleave = () => (card.tip.style.display = "none");
+      }
+      async function refresh() {
+        if (busy || paused) return;
+        busy = true;
+        const version = selectionVersion;
+        try {
+          const q = new URLSearchParams({
+            cursor: String(cursor),
+            generation,
+            run: $("run").value,
+          });
+          const res = await fetch("/api/events?" + q, { cache: "no-store" });
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          if (version !== selectionVersion) return;
+          const reset = data.generation !== generation;
+          if (reset) {
+            records = [];
+            cursor = 0;
+            generation = data.generation;
+          }
+          records.push(...data.records);
+          cursor = data.cursor;
+          summary = data.status;
+          setMode();
+          for (const id of summary.homes) {
+            if (![...$("home").options].some((o) => o.value === String(id))) {
+              const o = new Option("Home " + id, id);
+              $("home").add(o);
+            }
+          }
+          for (const name of summary.runs || []) {
+            if (![...$("run").options].some((o) => o.value === name))
+              $("run").add(new Option(name.replace("/frozen_code/source/results/", " / "), name));
+          }
+          const state = summary.status || "starting";
+          $("status").textContent =
+            summary.run +
+            " · " +
+            state +
+            " · " +
+            (summary.mode === "scheduling" ? (summary.eval_episode || 0) : summary.train_episode) +
+            "/" +
+            (summary.episodes ?? "?") +
+            (summary.evaluating ? " · evaluating" : "") +
+            (summary.ac_service === "thermal" ? " · thermal AC" : " · AC quota");
+          $("updated").textContent =
+            "Updated " + new Date().toLocaleTimeString();
+          $("dot").style.background =
+            state === "failed"
+              ? "#d14343"
+              : state === "completed"
+                ? "#8796a5"
+                : "#22a06b";
+          $("progress").firstElementChild.style.width =
+            Math.min(
+              100,
+              state === "completed" ? 100 : (100 * (summary.mode === "scheduling" ? (summary.eval_episode || 0) : summary.train_episode)) / (summary.episodes || 1),
+            ) + "%";
+          $("evalLabel").textContent =
+            summary.split === "validation" ? "Validation" : "Test";
+          $("detail").textContent =
+            (summary.mode === "scheduling" ? "Controller passes (not training) · " : "Last ") +
+            (summary.split || "evaluation") +
+            ": " +
+            (summary.eval_episode ?? "pending") +
+            " · GPU " +
+            (summary.gpu ?? "—") +
+            (summary.eta_seconds != null
+              ? " · cap ETA ≈ " + Math.ceil(summary.eta_seconds / 60) + " min"
+              : "") +
+            (summary.selection?.best_feasible ? " · Selected ep " + summary.selection.best_feasible.episode : "") +
+            (summary.convergence?.stopped ? " · validation plateau" : "") +
+            (summary.study_progress ? " · " + summary.study_progress : "") +
+            (summary.stage ? " · " + summary.stage : "");
+          $("finalTest").textContent = summary.final_test
+            ? `${summary.final_split === "validation" ? "July validation" : "August"} (ep ${summary.final_test.episode}): R ${summary.final_test.reward.toFixed(3)} · comfort ${summary.final_test.comfort_pct.toFixed(2)}%`
+            : "";
+          $("log").textContent = summary.log;
+          $("error").textContent = "";
+          if (reset || data.records.length) drawAll();
+        } catch (e) {
+          $("error").textContent = "Connection: " + e.message;
+        } finally {
+          busy = false;
+          if (version !== selectionVersion) refresh();
+        }
+      }
+      $("run").onchange = () => {
+        selectionVersion++;
+        cursor = 0;
+        generation = "";
+        records = [];
+        drawAll();
+        refresh();
+      };
+      for (const id of ["home", "window", "train", "shade", "zoomPct"])
+        $(id).onchange = drawAll;
+      $("pause").onclick = () => {
+        paused = !paused;
+        $("pause").textContent = paused ? "Resume" : "Pause";
+        if (!paused) refresh();
+      };
+      $("logs").onclick = () => ($("logbox").hidden = !$("logbox").hidden);
+      new ResizeObserver(() => requestAnimationFrame(drawAll)).observe(
+        $("charts"),
+      );
+      refresh();
+      setInterval(refresh, REFRESH_MS);
+    </script>
+  </body>
+</html>

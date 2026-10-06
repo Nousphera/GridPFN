@@ -1,0 +1,248 @@
+import argparse
+from datetime import datetime
+from pathlib import Path
+import matplotlib
+import torch
+import evaluate as evaluate_module
+import schedule as schedule_module
+import server as server_module
+from client import Client
+from dataset import PRICE_SCALE_FACTOR, dataset_dir, home_data_dir, load_data, setup_seed
+from environment import CONTINUOUS_ACTION_DIM, DISCRETE_ACTION_DIM, STATE_DIM
+from evaluate import CommunicationCostEvaluator, run_evaluation
+from utils.plots import (
+    plot_comm_time, plot_model_precision, plot_radar_chart, plot_training_metric,)
+from server import Server
+from utils.plot_utils import MODEL_ORDER, plot_home_data, save_and_plot_global_tou_tariff
+matplotlib.use("Agg")
+
+
+def configure_runtime(args, logs_root):
+    # Synchronize module-level output and evaluator device settings with client allocation.
+    server_module.logs_root = str(logs_root)
+    torch.set_num_threads(args.cpu_threads)
+    torch.set_num_interop_threads(min(2, args.cpu_threads))
+
+    devices = [torch.device("cpu")]
+    if torch.cuda.is_available():
+        device_ids = [args.gpu]
+        devices = [torch.device(f"cuda:{index}") for index in device_ids]
+        for index in device_ids:
+            torch.cuda.set_per_process_memory_fraction(args.gpu_memory_fraction, index)
+        names = ", ".join(f"{device}={torch.cuda.get_device_name(device)}" for device in devices)
+        print(f"CUDA devices: {names}")
+    else:
+        print("CUDA unavailable; using CPU")
+    evaluate_module.device = devices[0]
+    schedule_module.DEVICE = devices[0]
+    allocation = "round-robin" if len(devices) > 1 else devices[0]
+    print(f"CPU threads={args.cpu_threads}; GPU memory fraction={args.gpu_memory_fraction:.2f}; "
+          f"client allocation={allocation}\n")
+    return devices
+
+def save_train_settings(path, sections):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write("DATE: " + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
+        for title, settings in sections.items():
+            handle.write(f"\n--- {title} ---\n")
+            handle.writelines(f"{key} = {value!r}\n" for key, value in settings.items())
+
+
+def main(args, federated_models):
+    setup_seed(args.fixed_seed)
+    fedfit_t_end = args.episode if args.fedfit_t_end is None else args.fedfit_t_end
+    logs_root = Path(args.path_train).expanduser().resolve()/"logs"
+    results_root = logs_root.parent/"results"
+    schedules_root = logs_root.parent/"schedules"
+    # data_artifacts_root = Path(args.path_data_artifacts).expanduser().resolve()
+    results_root.mkdir(parents=True, exist_ok=True)
+    # data_artifacts_root.mkdir(parents=True, exist_ok=True)
+    logs_dir, results_dir = str(logs_root), str(results_root)
+
+    devices = configure_runtime(args, logs_root)
+    aggregate = args.aggregate or max(1, args.episode // 50)
+    home_ids = list(args.home_ids)
+    run_models = list(dict.fromkeys(args.run_models))
+    eval_models = list(dict.fromkeys(args.eval_models))
+    eval_federated = [model for model in eval_models if model in federated_models]
+    num_homes = len(home_ids)
+
+    datas = load_data(args.path_data, "*.csv", choose=[f"home_{home_id}" for home_id in home_ids])
+
+    agent_keys = ("gamma", "batch_size", "lr_actor", "lr_critic", "epsilon_start", "epsilon_end", "epsilon_decay",
+                  "critic_tau", "actor_tau")
+    agent_params = {key: getattr(args, key) for key in agent_keys}
+    feddmpq_params = {
+        "alpha_w": args.feddmpq_alpha_w, "beta_g": args.feddmpq_beta_g, "gamma_e": args.feddmpq_gamma_e,
+        "K": args.feddmpq_k, "low_bit": args.feddmpq_low_bit,
+    }
+    fedfit_params = {"adjust_fraction": args.fedfit_adjust_fraction, "t_end": fedfit_t_end}
+    pffdst_params = {"differential_ratio": args.pffdst_differential_ratio,
+                     "readjust_interval": args.pffdst_readjust_interval}
+    em_strategy = {
+        "tou": {"enabled": args.tou, "n_blocks": args.tou_blocks},
+        "dr_limit": args.dr_limit,
+        "dr_penalty": args.dr_penalty,
+        "dr_incentive": args.dr_incentive,
+        "pv_curtail": args.pv_curtail,
+        "export_price": args.export_price,
+    }
+    p2p_config = {"enabled": args.p2p, "price": args.p2p_price}
+    setup_keys = ("episode", "warmup_rounds", "seed", "fixed_seed", "update", "state_dim", "continuous_action_dim",
+                  "discrete_action_dim", "actor_sparsity", "critic_sparsity", "epsilon", "ma_window")
+    experimental_setup = {key: getattr(args, key) for key in setup_keys} | {"aggregate": aggregate}
+    sections = {
+        "EXPERIMENTAL SETUP": experimental_setup,
+        "MODEL PARAMETERS": {
+            "agent_params": agent_params, "fedfit_params": fedfit_params,
+            "pffdst_params": pffdst_params, "feddmpq_params": feddmpq_params},
+        "ENERGY MANAGEMENT STRATEGY": {
+            "fixed_cost": args.fixed_cost, "use_p2p": args.p2p,
+            "p2p_config": p2p_config, "price_scale_factor": PRICE_SCALE_FACTOR,
+            "em_strategy": em_strategy,
+        },
+        "RUNTIME": {
+            "path_data": args.path_data, "home_ids": home_ids,
+            "devices": [str(device) for device in devices],
+        },
+    }
+
+    for model_name in run_models:
+        torch.manual_seed(args.seed)
+        clients = [
+            Client(
+                data=data, state_dim=args.state_dim, continuous_action_dim=args.continuous_action_dim,
+                discrete_action_dim=args.discrete_action_dim, epsilon=args.epsilon, episode=args.episode,
+                agent_hyperparams=agent_params, fedfit_agent_hyperparams=fedfit_params,
+                pffdst_agent_hyperparams=pffdst_params,
+                feddmpq_agent_hyperparams=feddmpq_params,
+                fixed_cost=args.fixed_cost, device=devices[index % len(devices)],
+            ) for index, data in enumerate(datas)
+        ]
+        setup_seed(args.fixed_seed)
+        server = Server(
+            clients=clients, episode=args.episode, actor_sparsity=args.actor_sparsity,
+            critic_sparsity=args.critic_sparsity, update=args.update, aggregate=aggregate,
+            em_strategy=em_strategy, p2p_config=p2p_config, warmup_rounds=args.warmup_rounds,
+        )
+        save_train_settings(logs_root/model_name/"train_settings.txt", sections)
+        getattr(server, f"{model_name}_train")()
+        del server, clients
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    print("--- Training complete ---")
+
+    for metric in ("reward", "actor_loss", "critic_loss"):
+        filename = {
+            "reward": "rewards_plots_all_homes.pdf", "actor_loss": "loss_plots_all_homes_actor.pdf",
+            "critic_loss": "loss_plots_all_homes_critic.pdf",
+        }[metric]
+        plot_training_metric(metric, eval_models, num_homes=num_homes, window=args.ma_window,
+                             logs_base=logs_dir,
+                             save_path=str(results_root/filename))
+
+    if "feddmpq" in eval_models:
+        plot_model_precision(num_homes, low_bit=args.feddmpq_low_bit, window=args.ma_window,
+                             logs_base=logs_dir, save_path=str(results_root/"model_precision_FedDMPQ.pdf"))
+
+    # plot_home_data(home_ids[0], folder=args.path_data, save_path=str(data_artifacts_root/"home_data.pdf"))
+    # save_and_plot_global_tou_tariff(args.path_data, output_folder=str(data_artifacts_root),
+    #                                 figure_path=str(data_artifacts_root/"tou_global_tariff.pdf"))
+    setup_seed(args.fixed_seed)
+    results, evaluator = run_evaluation(
+        model_names=eval_models, num_homes=num_homes, path_data=args.path_data, save_path=results_dir,
+        fixed_cost=args.fixed_cost, p2p_config=p2p_config, fed_p2p_models=eval_federated,
+        em_strategy=em_strategy, home_ids=home_ids, logs_root=logs_dir,
+    )
+    num_test_days = min(len(home_result["all"]) for model_results in results.values()
+                        for home_result in model_results.values())
+    CommunicationCostEvaluator(results_dir=logs_dir).compute(
+        eval_models, num_homes, args.episode, aggregate, test_times=evaluator.test_times,
+        num_test_days=num_test_days, low_bit=args.feddmpq_low_bit, batch_size=args.batch_size, update=args.update,
+        fedfit_t_end=fedfit_t_end)
+    plot_comm_time(eval_models, logs_base=logs_dir, num_homes=num_homes,
+                   save_path=str(results_root/"model_comm_train_time.pdf"))
+    plot_comm_time(eval_models, mode="test", logs_base=logs_dir, num_homes=num_homes,
+                   save_path=str(results_root/"model_comm_test_time.pdf"))
+    plot_radar_chart(results, eval_models, save_path=results_dir, logs_base=logs_dir)
+    schedule_module.plot_schedules(
+        day=args.day, models=eval_models, path_data=args.path_data, path_logs=logs_dir,
+        path_output=str(schedules_root), home_id=args.home_id, home_ids=home_ids, disable_p2p=not args.p2p,
+        fed_p2p_models=eval_federated)
+
+
+if __name__ == "__main__":
+    ALL_MODELS = tuple(MODEL_ORDER)
+    RUN_MODELS = ALL_MODELS
+    EVAL_MODELS = ALL_MODELS
+    FEDERATED_MODELS = ALL_MODELS
+
+    HOME_IDS = (27, 950, 1222, 3000, 3488, 3517, 5587, 5679, 5997, 9053)
+
+    parser = argparse.ArgumentParser(description="Train, evaluate, and plot a complete Fed-HEMS experiment.",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    # Paths
+    parser.add_argument("--path_train", default="train_test", help="Training output directory.")
+    parser.add_argument("--path_data", default=str(home_data_dir), help="Home CSV directory.")
+    parser.add_argument("--path_data_artifacts", default=str(dataset_dir),
+                        help="Output directory for home-data and global-ToU.")
+    parser.add_argument("--home_ids", nargs="+", type=int, default=list(HOME_IDS), help="Dataset home IDs.")
+    parser.add_argument("--run_models", nargs="+", choices=ALL_MODELS, default=list(RUN_MODELS), help="Models to train.")
+    parser.add_argument("--eval_models", nargs="+", choices=ALL_MODELS, default=list(EVAL_MODELS), help="Models to evaluate.")
+    # Global experimental settings
+    parser.add_argument("--episode", type=int, default=1500, help="Training episodes per model.")
+    parser.add_argument("--warmup_rounds", type=int, default=75, help="Warmup rounds per agent.")
+    parser.add_argument("--seed", type=int, default=6, help="Model initialization seed.")
+    parser.add_argument("--fixed_seed", type=int, default=100, help="Seed for all other randomness.")
+    parser.add_argument("--update", type=int, default=10, help="Episodes between mask updates.")
+    parser.add_argument("--aggregate", type=int, default=20, help="Episodes per communication round.")
+    parser.add_argument("--ma_window", type=int, default=100, help="Moving-average window for training plots.")
+    parser.add_argument("--state_dim", type=int, default=STATE_DIM, help="State vector size.")
+    parser.add_argument("--continuous_action_dim", type=int, default=CONTINUOUS_ACTION_DIM,help="Continuous action size.")
+    parser.add_argument("--discrete_action_dim", type=int, default=DISCRETE_ACTION_DIM, help="Discrete action size.")
+    parser.add_argument("--actor_sparsity", type=float, default=0.75, help="Initial actor sparsity.")
+    parser.add_argument("--critic_sparsity", type=float, default=0.75,help="Initial critic sparsity.")
+    parser.add_argument("--epsilon", type=float, default=0.3, help="EdgeHEM rewiring rate.")
+    parser.add_argument("--gamma", type=float, default=0.99, help="Reward discount factor.")
+    parser.add_argument("--batch_size", type=int, default=64, help="Replay batch size.")
+    parser.add_argument("--lr_actor", type=float, default=1e-5, help="Actor learning rate.")
+    parser.add_argument("--lr_critic", type=float, default=1e-4, help="Critic learning rate.")
+    parser.add_argument("--epsilon_start", type=float, default=1.0, help="Initial exploration rate.")
+    parser.add_argument("--epsilon_end", type=float, default=0.005, help="Final exploration rate.")
+    parser.add_argument("--epsilon_decay", type=int, default=10000, help="Exploration decay steps.")
+    parser.add_argument("--critic_tau", type=float, default=0.01, help="Critic target-update rate.")
+    parser.add_argument("--actor_tau", type=float, default=0.001, help="Actor target-update rate.")
+    # FedFit model settings
+    parser.add_argument("--fedfit_adjust_fraction", type=float, default=0.2,
+                        help="Initial fraction of active weights exchanged per topology update.")
+    parser.add_argument("--fedfit_t_end", type=int, help="Last episode for FedFit topology updates; defaults to --episode.")
+    # PFFDST model settings
+    parser.add_argument("--pffdst_differential_ratio", type=float, default=0.5,
+                        help="Temporary extra-density ratio during PFFDST server mask readjustment.")
+    parser.add_argument("--pffdst_readjust_interval", type=int, default=1,
+                        help="Communication rounds between PFFDST server mask readjustments.")
+    # FedDMPQ model settings
+    parser.add_argument("--feddmpq_alpha_w", type=float, default=0.25, help="FedDMPQ weight-magnitude coefficient.")
+    parser.add_argument("--feddmpq_beta_g", type=float, default=0.25, help="FedDMPQ gradient coefficient.")
+    parser.add_argument("--feddmpq_gamma_e", type=float, default=0.50, help="FedDMPQ error coefficient.")
+    parser.add_argument("--feddmpq_k", type=int, default=10, help="FedDMPQ pruning patience.")
+    parser.add_argument("--feddmpq_low_bit", type=int, choices=(2, 4, 8, 16), default=8, help="FedDMPQ low-precision bit width.")
+    # Energy management settings
+    parser.add_argument("--tou", action=argparse.BooleanOptionalAction, default=True, help="Enable the ToU tariff.")
+    parser.add_argument("--tou_blocks", type=int, default=5, help="Number of daily time-of-use price blocks.")
+    parser.add_argument("--dr_limit", type=float, default=5.0, help="Demand-response import limit (kW), or 'none' to disable.")
+    parser.add_argument("--dr_penalty", type=float, default=0.50, help="Penalty for demand above the DR limit ($/kWh).")
+    parser.add_argument("--dr_incentive", type=float, default=0.025, help="Incentive for demand below the DR limit ($/kWh).")
+    parser.add_argument("--pv_curtail", type=float, default=2.5, help="Daily PV export cap (kWh), or 'None' for no cap.")
+    parser.add_argument("--export_price", type=float, default=0.025, help="Grid export compensation ($/kWh).")
+    parser.add_argument("--fixed_cost", type=float, default=5.0, help="Monthly fixed cost ($).")
+    parser.add_argument("--p2p", action=argparse.BooleanOptionalAction, default=True, help="Enable P2P trading.")
+    parser.add_argument("--p2p_price", type=float, default=0.10, help="P2P price ($/kWh) homes pay each other.")
+    parser.add_argument("--day", default="2019-08-01", help="Day to plot schedule")
+    parser.add_argument("--home_id", type=int, default=1, help="Home index to plot schedule.")
+    # GPU settings
+    parser.add_argument("--gpu", type=int, default=0, help="CUDA device index.")
+    parser.add_argument("--cpu_threads", type=int, default=5, help="CPU worker threads.")
+    parser.add_argument("--gpu_memory_fraction", type=float, default=1.0, help="GPU memory fraction.")
+    main(parser.parse_args(), FEDERATED_MODELS)

@@ -1,0 +1,10 @@
+GridPFN builds on the FedDMPQ repository:
+https://github.com/dcdube/FedDMPQ
+
+Original simulator reference: e34da8b68c646ae3d6c818ad13f2020e6ba06c73.
+Submission development started from tabpfn commit
+9cb9bbababf465e35f4859a89a08ebddd0895c5e.
+
+Original authors retain their copyright. This derivative is distributed under
+the Apache License, Version 2.0; see LICENSE.
+TabPFN model weights and third-party data have separate access and license terms.

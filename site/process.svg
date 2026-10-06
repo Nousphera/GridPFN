@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="664" viewBox="0 0 1200 664" role="img" aria-labelledby="title desc">
+<title id="title">GridPFN: local forecasts, shared learning, understandable energy plans</title>
+<desc id="desc">Household histories feed local TabPFN demand, solar and temperature forecasts. A PPO controller learns appliance actions in a simulator; FedAvg aggregates actors across household clients, while critics and forecast contexts remain home specific. The assistant uses tools to inspect readings, forecasts and simulated plans. Raw-data locality is not differential privacy or secure aggregation.</desc>
+<defs>
+<marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7" fill="#8aa39a"/></marker>
+<g id="house" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14L16 2L30 14M6 12V30H26V12M12 30V20H20V30"/></g>
+<g id="spark" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round"><path d="M18 1L4 19H14L11 32L29 12H18Z"/></g>
+<g id="brain" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="23" height="23" rx="6"/><path d="M11 0V5M22 0V5M11 28V33M22 28V33M0 11H5M0 22H5M28 11H33M28 22H33M11 12H22V22H11Z"/></g>
+<g id="chat" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 4H30V24H13L5 31V24H3Z"/><path d="M9 11H24M9 17H19"/></g>
+<style>text{font-family:Arial,sans-serif;fill:#244a40}.title{font-size:27px;font-weight:700}.label{font-size:17px;font-weight:700}.small{font-size:13px;fill:#61786f}.tag{font-size:12px;font-weight:700;letter-spacing:1.4px;fill:#5b7e70}.flow{stroke:#8aa39a;stroke-width:2;fill:none;marker-end:url(#arrow)}.pulse{stroke-dasharray:5 7;animation:travel 2s linear infinite}@keyframes travel{to{stroke-dashoffset:-24}}@media(prefers-reduced-motion:reduce){.pulse{animation:none}}</style>
+</defs>
+<rect width="1200" height="664" rx="22" fill="#f5f8f3"/>
+<text x="34" y="43" class="title">Learn together. Plan locally.</text><text x="34" y="69" class="small">Local by default. Federated by design. Powered by TabPFN.</text>
+<!-- Household collaboration. Actor weights are shared; critics are local. -->
+<rect x="34" y="95" width="1132" height="131" rx="17" fill="#fff" stroke="#dce7dc"/>
+<use href="#house" x="68" y="132" color="#5f8575"/><text x="116" y="143" class="label">Home 1</text><text x="116" y="164" class="small">Local training</text>
+<use href="#house" x="949" y="132" color="#5f8575"/><text x="996" y="143" class="label">Home N</text><text x="996" y="164" class="small">Local training</text>
+<path d="M235 149H405M934 149H793" class="flow pulse"/>
+<rect x="421" y="116" width="357" height="87" rx="13" fill="#e7f0e9"/><text x="446" y="143" class="tag">FEDERATED LEARNING</text><text x="446" y="170" class="label">FedAvg · shared actor</text><text x="446" y="190" class="small">Critics and forecast context stay local</text>
+<path d="M599 227V267" class="flow pulse"/>
+<!-- One home's forecasting and control pipeline -->
+<rect x="34" y="280" width="759" height="330" rx="17" fill="#fff" stroke="#dce7dc"/>
+<text x="57" y="309" class="tag">INSIDE EACH HOME</text>
+<rect x="57" y="332" width="176" height="129" rx="13" fill="#f1f4ef"/><use href="#house" x="75" y="347" color="#5f8575"/><text x="75" y="405" class="label">Home history</text><text x="75" y="428" class="small">Readings · tariffs</text><text x="75" y="448" class="small">Home-specific context</text>
+<path d="M236 394H262" class="flow pulse"/>
+<rect x="276" y="332" width="241" height="129" rx="13" fill="#176857"/><use href="#brain" x="296" y="347" color="#c6e2c7"/><text x="342" y="370" style="fill:#fff;font-size:21px;font-weight:700">TabPFN-3.5</text><text x="297" y="406" style="fill:#fff;font-size:17px;font-weight:700">Six-hour forecasts</text><text x="297" y="434" style="fill:#d5e8d6;font-size:14px">Demand · solar · temperature</text>
+<path d="M520 394H546" class="flow pulse"/>
+<rect x="560" y="332" width="211" height="129" rx="13" fill="#f1f4ef"/><use href="#spark" x="579" y="347" color="#a98242"/><text x="579" y="405" class="label">PPO controller</text><text x="579" y="428" class="small">State + forecasts</text><text x="579" y="448" class="small">Learned appliance actions</text>
+<path d="M665 465V490" class="flow pulse"/>
+<rect x="57" y="506" width="714" height="79" rx="12" fill="#f3f6f0"/>
+<text x="77" y="535" class="label">Cooling · car · laundry · battery</text><text x="77" y="560" class="small">Simulator checks: comfort, service, energy and cost</text>
+<!-- Assistant lives outside the control loop. -->
+<rect x="820" y="280" width="346" height="330" rx="17" fill="#eaf1ed" stroke="#d0dfd4"/>
+<use href="#chat" x="842" y="300" color="#176857"/><text x="887" y="324" class="label">Home assistant</text>
+<rect x="842" y="350" width="302" height="48" rx="10" fill="#fff"/><text x="857" y="379" class="label">“Why is my bill high?”</text>
+<path d="M993 403V420" class="flow pulse"/>
+<text x="842" y="448" class="label">LLM → energy tools</text><text x="842" y="474" class="small">Local chat or an API · MCP ready</text>
+<rect x="842" y="500" width="302" height="85" rx="11" fill="#fff"/>
+<text x="859" y="524" class="label">Explain · compare · plan</text><text x="859" y="549" class="small">Bills and appliance timelines</text><text x="859" y="570" class="small">TabPFN forecasts + SHAP</text>
+<path d="M790 398H814" class="flow"/>
+<text x="35" y="642" class="small">Forecast → plan → inspect cost &amp; comfort · One home per workspace</text>
+</svg>

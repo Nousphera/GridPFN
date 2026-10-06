@@ -1,0 +1,29 @@
+# python train.py --config configs/gridpfn.toml
+# Cohort, forecast/PPO settings and convergence rule come from the research recipe.
+# Selection: final September week. Refit: May–September. No October training.
+version = 1
+
+[study]
+protocol = "configs/seasonal.json"
+method = "tabpfn"
+test_month = 10
+output = "results/personalized"
+device = "cuda:0" # "cpu" works without CUDA; forecasting can be slow.
+
+# Base recipe: all 25 homes, seed 41, context 1024, six-hour load/PV/temperature
+# forecasts, TabPFN-3.5 one estimator, actor 256 / critic 64, actor lr 0.00003.
+# Selection: declared plateau or 20,000-episode cap. Refit: exact selected budget.
+
+[tariff]
+# A validated fixed research preset, passed explicitly to the training runtime.
+# Contradictory economic overrides in the base protocol are rejected.
+mode = "observed_training_fitted_tou"
+tou_blocks = 5
+p2p_enabled = true
+dr_limit = 5.0
+pv_curtail = 2.5
+fixed_cost = 5.0
+export_price = 0.025
+p2p_price = 0.1
+dr_penalty = 0.5
+dr_incentive = 0.025

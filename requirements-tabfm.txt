@@ -1,0 +1,8 @@
+# Optional research comparator; pretrained weights have separate noncommercial terms.
+torch==2.14.0
+numpy==2.5.3
+pandas==3.0.6
+scikit-learn==1.9.1
+huggingface-hub==2.1.1
+safetensors==0.8.0
+tabfm @ git+https://github.com/google-research/tabfm.git@fbb665569425fd2f490c6576b3af967876fe11ff

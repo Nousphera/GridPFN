@@ -1,0 +1,3 @@
+# AMD ordering avoids the bundled METIS heap-corruption path.
+# https://github.com/scipopt/PySCIPOpt/issues/1234
+mumps_pivot_order 0
