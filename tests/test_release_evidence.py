@@ -239,3 +239,48 @@ def test_packaging_cannot_use_old_evidence_as_release_gate(tmp_path, monkeypatch
     monkeypatch.setattr(make_release.subprocess, "check_output", unexpected_git)
     with pytest.raises(ValueError, match="performance.json"):
         make_release.main()
+
+
+def highlight_fold(name, bill, competitors, comfort=80, days=30):
+    """Small presentation fixture; deliberately independent of released scores."""
+    rows = []
+    for method, cost, warmth in [
+        ("tabpfn", bill, comfort),
+        ("tabfm", competitors[0], 70),
+        ("tabicl", competitors[1], 70),
+    ]:
+        rows.append(
+            {
+                "id": method,
+                "policy": {
+                    "metrics": {
+                        "energy_bill_without_dr": {"mean": cost},
+                        "comfort_pct": {"mean": warmth},
+                    }
+                },
+            }
+        )
+    return {"id": name, "dates": list(range(days)), "rows": rows}
+
+
+def test_highlight_requires_joint_gains_and_ranks_the_weaker_comparison():
+    from scripts.plot_foundation_comparison import select_highlight
+
+    evidence = {
+        "folds": [
+            highlight_fold("unbalanced", 90, (100, 200)),
+            highlight_fold("balanced", 80, (100, 110)),
+            highlight_fold("worse-comfort", 1, (100, 110), comfort=60),
+            highlight_fold("short-window", 2, (100, 110), days=6),
+        ]
+    }
+    assert select_highlight(evidence)["id"] == "balanced"
+
+
+@pytest.mark.parametrize("comfort,baseline", [(70, 100), (60, 100), (80, 0), (80, 80)])
+def test_highlight_refuses_to_claim_a_joint_win_when_none_exists(comfort, baseline):
+    from scripts.plot_foundation_comparison import select_highlight
+
+    evidence = {"folds": [highlight_fold("no-joint-win", 80, (100, baseline), comfort)]}
+    with pytest.raises(ValueError, match="No recorded month"):
+        select_highlight(evidence)

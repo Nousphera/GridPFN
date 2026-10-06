@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-06T23:06:25.457857</dc:date>
+    <dc:date>2026-10-06T23:13:54.867269</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -86,40 +86,40 @@ z
      <g id="line2d_2">
       <path d="M 241.92 343.44
 L 241.92 203.04
-" clip-path="url(#p880e4cf394)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_3"/>
      <g id="text_1">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="241.92" y="360.277891" transform="rotate(-0 241.92 360.277891)">1.5569</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="241.92" y="360.278594" transform="rotate(-0 241.92 360.278594)">$1.36</text>
      </g>
     </g>
     <g id="xtick_2">
      <g id="line2d_4">
       <path d="M 432 343.44
 L 432 203.04
-" clip-path="url(#p880e4cf394)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_5"/>
      <g id="text_2">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="432" y="360.277891" transform="rotate(-0 432 360.277891)">1.5616</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="432" y="360.278594" transform="rotate(-0 432 360.278594)">$1.37</text>
      </g>
     </g>
     <g id="xtick_3">
      <g id="line2d_6">
       <path d="M 622.08 343.44
 L 622.08 203.04
-" clip-path="url(#p880e4cf394)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pfafce628e9)" style="fill: none; stroke: #edf0e9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_7"/>
      <g id="text_3">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="622.08" y="360.277891" transform="rotate(-0 622.08 360.277891)">1.5663</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #718478" x="622.08" y="360.278594" transform="rotate(-0 622.08 360.278594)">$1.38</text>
      </g>
     </g>
    </g>
    <g id="matplotlib.axis_2"/>
    <g id="PathCollection_1">
     <defs>
-     <path id="m15f965cb80" d="M 0 4.873397
+     <path id="m8f2c67e967" d="M 0 4.873397
 C 1.29244 4.873397 2.532119 4.359905 3.446012 3.446012
 C 4.359905 2.532119 4.873397 1.29244 4.873397 0
 C 4.873397 -1.29244 4.359905 -2.532119 3.446012 -3.446012
@@ -131,13 +131,13 @@ C -2.532119 4.359905 -1.29244 4.873397 0 4.873397
 z
 " style="stroke: #126452"/>
     </defs>
-    <g clip-path="url(#p880e4cf394)">
-     <use xlink:href="#m15f965cb80" x="300" y="226.44" style="fill: #126452; stroke: #126452"/>
+    <g clip-path="url(#pfafce628e9)">
+     <use xlink:href="#m8f2c67e967" x="279.750785" y="226.44" style="fill: #126452; stroke: #126452"/>
     </g>
    </g>
    <g id="PathCollection_2">
     <defs>
-     <path id="m271274c9da" d="M 0 4.873397
+     <path id="m1f30856743" d="M 0 4.873397
 C 1.29244 4.873397 2.532119 4.359905 3.446012 3.446012
 C 4.359905 2.532119 4.873397 1.29244 4.873397 0
 C 4.873397 -1.29244 4.359905 -2.532119 3.446012 -3.446012
@@ -149,13 +149,13 @@ C -2.532119 4.359905 -1.29244 4.873397 0 4.873397
 z
 " style="stroke: #748797"/>
     </defs>
-    <g clip-path="url(#p880e4cf394)">
-     <use xlink:href="#m271274c9da" x="564" y="273.24" style="fill: #748797; stroke: #748797"/>
+    <g clip-path="url(#pfafce628e9)">
+     <use xlink:href="#m1f30856743" x="542.669902" y="273.24" style="fill: #748797; stroke: #748797"/>
     </g>
    </g>
    <g id="PathCollection_3">
-    <g clip-path="url(#p880e4cf394)">
-     <use xlink:href="#m271274c9da" x="346.972744" y="320.04" style="fill: #748797; stroke: #748797"/>
+    <g clip-path="url(#pfafce628e9)">
+     <use xlink:href="#m1f30856743" x="474.38498" y="320.04" style="fill: #748797; stroke: #748797"/>
     </g>
    </g>
   </g>
@@ -163,56 +163,65 @@ z
    <text style="font-weight: 700; font-size: 18px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="34.56" y="25.92" transform="rotate(-0 34.56 25.92)">Electricity bill</text>
   </g>
   <g id="text_5">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="51.84" y="75.6" transform="rotate(-0 51.84 75.6)">TabPFN vs TabFM</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #718478" x="829.44" y="23.76" transform="rotate(-0 829.44 23.76)">Selected month · June 2019</text>
   </g>
   <g id="text_6">
-   <text style="font-weight: 700; font-size: 28px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="51.84" y="107.568" transform="rotate(-0 51.84 107.568)">−0.42%</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="51.84" y="75.6" transform="rotate(-0 51.84 75.6)">TabPFN vs TabFM</text>
   </g>
   <g id="text_7">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="102.816" transform="rotate(-0 207.36 102.816)">Lower simulated bill</text>
+   <text style="font-weight: 700; font-size: 28px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="51.84" y="107.568" transform="rotate(-0 51.84 107.568)">−1.01%</text>
   </g>
   <g id="text_8">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="466.56" y="75.6" transform="rotate(-0 466.56 75.6)">TabPFN vs TabICLv2</text>
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="95.472" transform="rotate(-0 207.36 95.472)">Lower simulated bill</text>
   </g>
   <g id="text_9">
-   <text style="font-weight: 700; font-size: 28px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="466.56" y="107.568" transform="rotate(-0 466.56 107.568)">−0.07%</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="207.36" y="114.48" transform="rotate(-0 207.36 114.48)">+0.30 pp comfort</text>
   </g>
   <g id="text_10">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="102.816" transform="rotate(-0 622.08 102.816)">Lower simulated bill</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="466.56" y="75.6" transform="rotate(-0 466.56 75.6)">TabPFN vs TabICLv2</text>
   </g>
   <g id="text_11">
-   <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="51.84" y="177.984" transform="rotate(-0 51.84 177.984)">$ / home / day · lower is better · zoomed scale</text>
+   <text style="font-weight: 700; font-size: 28px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="466.56" y="107.568" transform="rotate(-0 466.56 107.568)">−0.75%</text>
   </g>
   <g id="text_12">
-   <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #718478" x="812.16" y="177.984" transform="rotate(-0 812.16 177.984)">Mean ± SD across homes</text>
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="95.472" transform="rotate(-0 622.08 95.472)">Lower simulated bill</text>
   </g>
   <g id="text_13">
-   <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="229.557656" transform="rotate(-0 51.84 229.557656)">TabPFN-3.5</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #126452" x="622.08" y="114.48" transform="rotate(-0 622.08 114.48)">+0.12 pp comfort</text>
   </g>
   <g id="text_14">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="229.297422" transform="rotate(-0 812.16 229.297422)">1.5584 ± 0.877</text>
+   <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #718478" x="51.84" y="177.984" transform="rotate(-0 51.84 177.984)">$ / home / day · lower is better</text>
   </g>
   <g id="text_15">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="276.357656" transform="rotate(-0 51.84 276.357656)">TabFM</text>
+   <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #718478" x="812.16" y="177.984" transform="rotate(-0 812.16 177.984)">Mean ± SD across homes</text>
   </g>
   <g id="text_16">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="276.097422" transform="rotate(-0 812.16 276.097422)">1.5649 ± 0.876</text>
+   <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="229.557656" transform="rotate(-0 51.84 229.557656)">TabPFN-3.5</text>
   </g>
   <g id="text_17">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="323.157656" transform="rotate(-0 51.84 323.157656)">TabICLv2</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="229.297422" transform="rotate(-0 812.16 229.297422)">1.3620 ± 0.853</text>
   </g>
   <g id="text_18">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="322.897422" transform="rotate(-0 812.16 322.897422)">1.5595 ± 0.878</text>
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="276.357656" transform="rotate(-0 51.84 276.357656)">TabFM</text>
   </g>
   <g id="text_19">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a67b37" x="51.84" y="396.237656" transform="rotate(-0 51.84 396.237656)">Perfect-future oracle</text>
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="276.097422" transform="rotate(-0 812.16 276.097422)">1.3758 ± 0.857</text>
   </g>
   <g id="text_20">
-   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #a67b37" x="812.16" y="395.977422" transform="rotate(-0 812.16 395.977422)">1.2827 ± 0.809</text>
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #193c35" x="51.84" y="323.157656" transform="rotate(-0 51.84 323.157656)">TabICLv2</text>
+  </g>
+  <g id="text_21">
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #193c35" x="812.16" y="322.897422" transform="rotate(-0 812.16 322.897422)">1.3722 ± 0.858</text>
+  </g>
+  <g id="text_22">
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #a67b37" x="51.84" y="396.237656" transform="rotate(-0 51.84 396.237656)">Perfect-future oracle</text>
+  </g>
+  <g id="text_23">
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #a67b37" x="812.16" y="395.977422" transform="rotate(-0 812.16 395.977422)">1.1132 ± 0.795</text>
   </g>
  </g>
  <defs>
-  <clipPath id="p880e4cf394">
+  <clipPath id="pfafce628e9">
    <rect x="241.92" y="203.04" width="380.16" height="140.4"/>
   </clipPath>
  </defs>

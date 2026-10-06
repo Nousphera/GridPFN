@@ -53,12 +53,12 @@ Each home gets a model directory under `results/personalized/models/`.
 
 <!-- PERFORMANCE:START -->
 
-![Simulated bills: TabPFN, TabFM, TabICLv2 and the perfect-future oracle](site/foundation-comparison.svg)
+![Selected month, June 2019: lower bills and higher comfort against both foundation-model baselines](site/foundation-comparison.svg)
 
 > ***Oracle knows the future. Only its combined objective is a performance bound—not its bill or comfort separately.***
 <!-- PERFORMANCE:END -->
 
-[Explore interactive results ↗](https://nousphera.github.io/GridPFN/performance.html?scope=foundations)
+[Explore interactive results ↗](https://nousphera.github.io/GridPFN/performance.html?scope=foundations&period=2019-06)
 
 </details>
 

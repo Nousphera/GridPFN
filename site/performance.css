@@ -9,6 +9,6 @@
 .foundation-view .chart-value{font-size:12px}
 @media(max-width:550px){.oracle-space{display:none}.oracle-separate{min-height:52px}.foundation-view .chart-value{font-size:11px}}
 
-.foundation-view .spread-note,.foundation-view .oracle-note{font-size:16px;font-style:italic;line-height:1.6;margin:20px 0 0}.foundation-view .spread-note{color:var(--muted)}
+.foundation-view .oracle-note{font-size:16px;font-style:italic;line-height:1.6;margin:20px 0 0}
 
 .comparison-card[data-outcome="better"] .comparison-value,.comparison-card[data-outcome="better"] .comparison-direction{color:#126452}.comparison-card[data-outcome="worse"] .comparison-value,.comparison-card[data-outcome="worse"] .comparison-direction{color:#946023}

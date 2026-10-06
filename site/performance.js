@@ -108,8 +108,14 @@
     const holder = $("chart"); holder.replaceChildren();
     const means = rows.map(row => row.policy.metrics[metric].mean);
     const span = Math.max(...means) - Math.min(...means) || 0.001;
-    const low = Math.min(...means) - span * 0.22;
-    const high = Math.max(...means) + span * 0.22;
+    const rawStep = span / 3;
+    const power = 10 ** Math.floor(Math.log10(rawStep));
+    const step = Math.max(metric === "comfort_pct" ? 0.1 : 0.01,
+      [1, 2, 5, 10].find(multiple => multiple * power >= rawStep) * power);
+    const low = Math.floor(Math.min(...means) / step) * step;
+    const high = Math.max(low + step, Math.ceil(Math.max(...means) / step) * step);
+    const ticks = Array.from({length: Math.round((high - low) / step) + 1}, (_, i) => low + i * step);
+    const tickDigits = Math.max(0, -Math.floor(Math.log10(step)));
     const digits = metric === "comfort_pct" ? 3 : 4;
     for (const row of [...rows, group.oracle]) {
       const stats = row.policy.metrics[metric];
@@ -124,7 +130,7 @@
       } else {
         const svg = svgNode("svg", {viewBox: "0 0 600 36", class: "track", role: "img", "aria-label": `${row.label}: mean ${stats.mean}, household SD ${stats.sd}`});
         const x = amount => 12 + 576 * (amount - low) / (high - low);
-        for (const tick of [low, (low + high) / 2, high]) svg.append(svgNode("line", {x1:x(tick),x2:x(tick),y1:0,y2:36,stroke:"#edf0e9"}));
+        for (const tick of ticks) svg.append(svgNode("line", {x1:x(tick),x2:x(tick),y1:0,y2:36,stroke:"#edf0e9"}));
         const color = row.id === "tabpfn" ? "#126452" : "#748797";
         const marker = svgNode("circle", {cx:x(stats.mean),cy:18,r:7,fill:color,class:"foundation-mean"});
         marker.append(svgNode("title", {})); marker.firstChild.textContent = `${row.label}: ${format(stats.mean, digits)} ± ${format(stats.sd, 3)}`;
@@ -133,9 +139,9 @@
       holder.append(line);
     }
     const axis = node("div", undefined, "axis"); const labels = node("div", undefined, "axis-labels");
-    [low, (low + high) / 2, high].forEach(tick => labels.append(node("span", format(tick, digits))));
+    ticks.forEach(tick => labels.append(node("span", (metric === "energy_bill_without_dr" ? "$" : "") + format(tick, tickDigits))));
     axis.append(labels); holder.append(axis);
-    $("metric-unit").textContent = measures[metric].unit + " · zoomed scale";
+    $("metric-unit").textContent = measures[metric].unit;
     $("oracle-note").textContent = "The oracle knows future traces. Only its combined objective bounds attainable performance; its bill and comfort are components of that schedule.";
   }
   function comparisons(group) {
@@ -212,8 +218,7 @@
     document.querySelector(".lead").textContent = "TabPFN-3.5, TabFM and TabICLv2 · the same controller · a perfect-future reference.";
     const note = $("oracle-note");
     note.className = "oracle-note";
-    const spreadNote = node("p", "SD (standard deviation) shows differences between homes: higher means more variation, not better performance.", "spread-note");
-    document.querySelector(".result-card").append(spreadNote, note);
+    document.querySelector(".result-card").append(note);
     document.querySelectorAll(".supporting").forEach(panel => panel.remove());
     document.querySelectorAll("[data-metric]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.metric === metric)));
   }
@@ -230,6 +235,8 @@
     .then(data => {
       evidence = data;
       data.folds.forEach(fold => { const option = node("option", monthLabel(fold.id)); option.value = fold.id; $("period").append(option); });
+      const requestedPeriod = new URLSearchParams(location.search).get("period");
+      if (data.folds.some(fold => fold.id === requestedPeriod)) $("period").value = requestedPeriod;
       $("period").disabled = false;
       document.querySelectorAll("[data-metric]").forEach(button => { button.disabled = false; });
       if (!focused) $("finding").textContent = typeof data.finding === "string" ? data.finding : "See the evidence file for the complete recorded comparison.";

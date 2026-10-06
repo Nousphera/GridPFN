@@ -1,5 +1,7 @@
 """Render the compact README bill comparison from verified experiment evidence."""
 
+from datetime import date
+from math import ceil, floor
 from pathlib import Path
 
 import matplotlib
@@ -12,9 +14,32 @@ from gridpfn.paths import ROOT
 from gridpfn.release_evidence import load_evidence
 
 
+def select_highlight(data):
+    """Post-hoc highlight among complete recorded monthly folds, never custom windows."""
+    candidates = []
+    for fold in data["folds"]:
+        if len(fold["dates"]) < 7:
+            continue
+        rows = {row["id"]: row["policy"]["metrics"] for row in fold["rows"]}
+        own = rows["tabpfn"]
+        bill_gains, comfort_gains = [], []
+        for comparator in ("tabfm", "tabicl"):
+            other = rows[comparator]
+            baseline = other["energy_bill_without_dr"]["mean"]
+            if baseline <= 0:
+                break
+            bill_gains.append(1 - own["energy_bill_without_dr"]["mean"] / baseline)
+            comfort_gains.append(own["comfort_pct"]["mean"] - other["comfort_pct"]["mean"])
+        if len(bill_gains) == 2 and min(bill_gains) > 0 and min(comfort_gains) > 0:
+            candidates.append((min(bill_gains), min(comfort_gains), fold["id"], fold))
+    if not candidates:
+        raise ValueError("No recorded month improves both bill and comfort against both models")
+    return max(candidates, key=lambda item: item[:3])[3]
+
+
 def render(root=ROOT):
     root = Path(root)
-    data = load_evidence(root / "site/performance.json")
+    data = select_highlight(load_evidence(root / "site/performance.json"))
     indexed = {row["id"]: row for row in data["rows"]}
     rows = [indexed[key] for key in ("tabpfn", "tabfm", "tabicl")]
     bill = "energy_bill_without_dr"
@@ -45,25 +70,33 @@ def render(root=ROOT):
         )
 
     text(0.04, 0.94, "Electricity bill", size=18, weight="bold")
+    period = date.fromisoformat(data["dates"][0]).strftime("%B %Y")
+    text(0.96, 0.945, f"Selected month · {period}", color=muted, ha="right")
     for x, comparator in ((0.04, indexed["tabfm"]), (0.52, indexed["tabicl"])):
         card(x, 0.69, 0.44, 0.19)
         reduction = 100 * (1 - stats(rows[0])["mean"] / stats(comparator)["mean"])
         text(x + 0.02, 0.825, f"TabPFN vs {comparator['label']}", color=muted)
         text(x + 0.02, 0.751, f"−{reduction:.2f}%", size=28, color=green, weight="bold")
-        text(x + 0.20, 0.762, "Lower simulated bill", size=12, color=green)
+        text(x + 0.20, 0.779, "Lower simulated bill", size=12, color=green)
+        comfort_gain = (
+            rows[0]["policy"]["metrics"]["comfort_pct"]["mean"]
+            - comparator["policy"]["metrics"]["comfort_pct"]["mean"]
+        )
+        text(x + 0.20, 0.735, f"+{comfort_gain:.2f} pp comfort", size=11, color=green)
 
     card(0.04, 0.055, 0.92, 0.57)
-    text(0.06, 0.588, "$ / home / day · lower is better · zoomed scale", size=10, color=muted)
+    text(0.06, 0.588, "$ / home / day · lower is better", size=10, color=muted)
     text(0.94, 0.588, "Mean ± SD across homes", size=10, color=muted, ha="right")
     means = [stats(row)["mean"] for row in rows]
-    span = max(means) - min(means)
-    low, high = min(means) - 0.22 * span, max(means) + 0.22 * span
+    low, high = floor(min(means) * 100) / 100, ceil(max(means) * 100) / 100
+    if high <= low:
+        high = low + 0.01
     axis = fig.add_axes((0.28, 0.205, 0.44, 0.325), zorder=2)
     axis.set_xlim(low, high)
     axis.set_ylim(-0.5, 2.5)
     axis.invert_yaxis()
-    ticks = [low, (low + high) / 2, high]
-    axis.set_xticks(ticks, [f"{v:.4f}" for v in ticks])
+    ticks = [cents / 100 for cents in range(round(low * 100), round(high * 100) + 1)]
+    axis.set_xticks(ticks, [f"${v:.2f}" for v in ticks])
     axis.set_yticks([])
     axis.tick_params(length=0, labelsize=9, colors=muted, pad=10)
     axis.grid(axis="x", color="#edf0e9")

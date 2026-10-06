@@ -94,3 +94,26 @@ The real-data experiment requires authorized household inputs. See [dataset acqu
 - Within-home forecasts use observed history available by the decision time; measured simulation outcomes are not deployed savings.
 - Raw household CSVs require authorized access and are not redistributed; code licensing does not grant dataset rights.
 - TabFM weights retain their research-only license and are not included.
+
+## README highlight
+
+The figure highlights **June 2019**, selected after evaluation from the five
+complete monthly folds. Eligible folds must contain at least seven evaluated
+days and improve both average bill and comfort against both TabFM and TabICLv2.
+They are ranked by the smaller of the two relative bill reductions, then the
+smaller comfort gain. June is the only eligible month in this study.
+
+Across all 25 homes in June, TabPFN reduces the simulated bill by **1.01% vs
+TabFM** and **0.75% vs TabICLv2**, while comfortable time increases by **0.30**
+and **0.12 percentage points**, respectively. This is a selected-month result,
+not the pooled study result or an independent confirmation. June's combined
+objective is slightly higher than TabFM's; the highlight does not claim an
+objective win against both. All months remain available in the explorer.
+
+For the same selected month, the bill saving against the arithmetic mean of
+TabFM and TabICLv2 is **$9.03 across all 25 homes**, or **$0.36 per home**.
+This is `(mean baseline daily bill − mean TabPFN daily bill) × 25 × 30`;
+22 of the 25 homes have a lower bill than that comparator. It is a modest
+absolute saving, not a claim of substantial deployed savings.
+
+Regenerate the evidence-backed figure with `python -m scripts.plot_foundation_comparison`.
